@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import schedule from './data/schedule.json'
 import LessonCard from './components/LessonCard.jsx'
+import InstallHint from './components/InstallHint.jsx'
 import floorPlanPdf from './assets/Планы этажей.pdf'
 
 const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
@@ -192,6 +193,8 @@ function App() {
           </div>
         </section>
       </main>
+
+      <InstallHint />
 
       <div className="footer">
         <span>
