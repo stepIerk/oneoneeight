@@ -4,7 +4,7 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(8px );
+  bottom: var(--tab-bar-offset);
   z-index: 40;
   display: flex;
   gap: 0px;
@@ -44,7 +44,9 @@
 
 /* Место под таб-бар: контент не уходит под него (ниже в каскаде — побеждает).
    Нижний отступ ФИКСИРОВАННЫЙ: safe-area снизу в PWA standalone уводит
-   панель вверх (домашняя полоса жеста iOS). Отступ выставляем сами. */
+   панель вверх (домашняя полоса жеста iOS). Отступ выставляем сами.
+   110px = высота таб-бара + зазор под контентом; высота взлёта бара
+   учитывается через var(--tab-bar-offset): паддинг растёт вместе с ним. */
 .wrap {
-  padding-bottom: calc(118px);
+  padding-bottom: calc(110px + var(--tab-bar-offset));
 }
