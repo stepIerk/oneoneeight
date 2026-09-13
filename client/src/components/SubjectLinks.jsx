@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Link2, Plus, X } from 'lucide-react'
 import { addLessonLink, deleteLessonLink } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
+import { listVariants, itemVariants } from '../utils/anim'
 
 /** Нормализация URL: добавляем https://, если схемы нет */
 function normalizeUrl(raw) {
@@ -88,31 +90,53 @@ function SubjectSection({ subject, links, open, onToggle, formOpen, onFormOpen, 
         <span className={`subject-chevron${open ? ' open' : ''}`} aria-hidden="true">›</span>
       </button>
 
-      {open && (
-        <div className="subject-body">
-          {links.length === 0 && !formOpen && (
-            <p className="mat-empty">Ссылок по предмету пока нет — добавьте первой.</p>
-          )}
-          <div className="mat-list">
-            {links.map((l) => (
-              <span key={l.id} className="attach-item link">
-                <a href={l.url} target="_blank" rel="noreferrer">
-                  <Link2 size={14} className="attach-icon" aria-hidden="true" />
-                  {l.label || l.url}
-                </a>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    className="attach-delete"
-                    title="Удалить ссылку"
-                    onClick={() => remove(l)}
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="subject-body"
+            className="subject-body-anim"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+          >
+            <div className="subject-body">
+              {links.length === 0 && !formOpen && (
+                <p className="mat-empty">
+                  Ссылок по предмету пока нет — добавьте первой.
+                </p>
+              )}
+              {links.length > 0 && (
+                <motion.div
+                  className="mat-list"
+                  variants={listVariants}
+                  initial="hidden"
+                  animate="show"
+                >
+                  {links.map((l) => (
+                    <motion.span
+                      key={l.id}
+                      className="attach-item link"
+                      variants={itemVariants}
+                    >
+                      <a href={l.url} target="_blank" rel="noreferrer">
+                        <Link2 size={14} className="attach-icon" aria-hidden="true" />
+                        {l.label || l.url}
+                      </a>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          className="attach-delete"
+                          title="Удалить ссылку"
+                          onClick={() => remove(l)}
+                        >
+                          <X size={14} aria-hidden="true" />
+                        </button>
+                      )}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              )}
 
           {formOpen ? (
             <div className="subject-form">
@@ -127,8 +151,10 @@ function SubjectSection({ subject, links, open, onToggle, formOpen, onFormOpen, 
               добавить ссылку
             </button>
           )}
-        </div>
-      )}
+          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

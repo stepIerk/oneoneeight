@@ -77,6 +77,10 @@
 
 html {
   scroll-behavior: smooth;
+  /* Высота дневной карусели меняется между днями (разное число пар,
+     переносы текста). Без этого браузер «якорит» прокрутку страницы на
+     меняющемся контенте и после свайпа содержимое резко подпрыгивает вверх */
+  overflow-anchor: none;
 }
 
 body {
@@ -110,12 +114,10 @@ button {
      из-под Dynamic Island / статус-бара; в обычном браузере равен 0.
      +26px — дыхание сверху для всех страниц, кроме главной
      (у неё сверху закреплён .day-dots ~78px, см. .wrap.page-home) */
-  padding: calc(env(safe-area-inset-top) + 26px) 18px
-    calc(70px + env(safe-area-inset-bottom));
+  padding: calc(env(safe-area-inset-top) + 26px) 18px 70px;
 }
 .wrap.page-home {
-  padding: calc(env(safe-area-inset-top) + 92px) 18px
-    calc(70px + env(safe-area-inset-bottom));
+  padding: calc(env(safe-area-inset-top) + 92px) 18px 70px;
 }
 
 /* ---------- Hero-секция удалена ---------- */

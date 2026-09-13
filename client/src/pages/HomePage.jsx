@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { animate, motion, useMotionValue } from 'motion/react'
 import LessonCard from '../components/LessonCard.jsx'
 import Announcements from '../components/Announcements.jsx'
 import { announcementsEnabled } from '../config/features'
+import { fadeUp, listVariants, springSoft, trackSettle, SWIPE_OFFSET, SWIPE_VELOCITY } from '../utils/anim'
 import {
   useScheduleData, useNotes, useLessonLinks, useAnnouncements, useHomework,
 } from '../firebase/data'
@@ -13,16 +15,11 @@ import {
   formatRuDate, isToday, weekdayKeyOf, DAY_LABELS,
 } from '../utils/dates'
 
-/** Длительность доводки свайпа (анимация приведения панели к краю) */
-const SETTLE_MS = 280
-
 /**
- * Панель одного дня внутри карусели. Соседние панели («вчера»/«завтра»)
- * смонтированы всегда и стоят за краями — при свайпе содержимое следующего
- * дня появляется мгновенно, включая переход на соседнюю неделю (после
- * воскресенья — понедельник следующей).
+ * Контент одного дня. Анимируется через родителя (варианты fadeUp/listVariants):
+ * заголовок и карточки появляются каскадом. Side-панели (вчера/завтра) статичны.
  */
-function DayPane({ iso, side, template, overrides, notes, links, homework, nowMinutes, today }) {
+function DayPane({ iso, side, intro, template, overrides, notes, links, homework, nowMinutes, today }) {
   const day = useMemo(
     () => getDaySchedule(template, overrides, iso),
     [template, overrides, iso],
@@ -38,7 +35,13 @@ function DayPane({ iso, side, template, overrides, notes, links, homework, nowMi
       className={`day-pane${side ? ` ${side}` : ' current'}`}
       aria-hidden={side ? true : undefined}
     >
-      <div className="day-head">
+      <motion.div
+        className="day-head"
+        variants={side || !intro ? undefined : fadeUp}
+        initial={side || !intro ? false : 'hidden'}
+        animate="show"
+        key={side ? `side-${iso}` : `day-${iso}`}
+      >
         <h2 className="day-title">
           {day.title}
           <span className="day-date"> · {formatRuDate(iso)}</span>
@@ -50,9 +53,15 @@ function DayPane({ iso, side, template, overrides, notes, links, homework, nowMi
           )}
         </h2>
         <div className="day-meta">{dayMeta(day)}</div>
-      </div>
+      </motion.div>
 
-      <div className="schedule">
+      <motion.div
+        className="schedule"
+        variants={side || !intro ? undefined : listVariants}
+        initial={side || !intro ? false : 'hidden'}
+        animate="show"
+        key={side ? `side-list-${iso}` : `day-list-${iso}`}
+      >
         {day.lessons.length === 0 && (
           <article className="lesson">
             <div className="time">
@@ -81,10 +90,11 @@ function DayPane({ iso, side, template, overrides, notes, links, homework, nowMi
               notes={notes}
               links={links}
               homework={homework}
+              animated={!side && intro}
             />
           )
         })}
-      </div>
+      </motion.div>
     </section>
   )
 }
@@ -98,15 +108,120 @@ function HomePage() {
 
   // Выбранная дата — основа навигации (и по дням, и по неделям)
   const [selectedDate, setSelectedDate] = useState(() => toISODate(new Date()))
+  // Дата, подсвеченная в точках недели: обновляется СРАЗУ в момент жеста
+  // (goPage/pickDate), а не по завершении доводки трека, — фиолетовая пилюля
+  // и числа недели реагируют мгновенно, без «опоздания» за анимацией
+  const [dotDate, setDotDate] = useState(() => toISODate(new Date()))
   const [now, setNow] = useState(() => new Date())
 
-  // 'idle' — свайпа нет; 'drag' — палец ведёт панели; 'settling' — доводка
-  const [phase, setPhase] = useState('idle')
+  const selectedDateRef = useRef(selectedDate)
+  useEffect(() => { selectedDateRef.current = selectedDate }, [selectedDate])
 
-  const carouselRef = useRef(null)
+  // Трек карусели: motion value (не state!) — палец ведёт панели 1:1 без ре-рендеров.
+  // ВАЖНО: drag свободный, без dragConstraints — встроенный возврат motion в 0
+  // после отпускания гонялся бы с нашей программной доводкой до края
+  // (два писателя в trackX = дёрганный свайп). Доводку всегда делаем сами.
+  const trackX = useMotionValue(0)
+  // Ref на вьюпорт карусели — для ширины шага при программном переходе
+  const viewportRef = useRef(null)
+  // Ref на сам трек — для резерва высоты при смене дня
   const trackRef = useRef(null)
-  const gestureRef = useRef(null)
-  const suppressClickRef = useRef(false)
+  // Переход «трек едет к краю»: { target, dir, controls } или null.
+  // Закрывается по концу анимации (promise), а не по selectedDate:
+  // тап по точкам недели во время доводки её не срывает.
+  const transitionRef = useRef(null)
+  // Контролы ЛЮБОЙ текущей анимации трека (доводка к краю или возврат в 0):
+  // новый жест обязан их остановить, иначе два писателя в trackX = рывки
+  const settleAnimRef = useRef(null)
+  // Клик давим только в коротком окне после свайпа, а не «до следующего клика»
+  const lastDragEndRef = useRef(0)
+  // Продолжение отпущенной доводки новым жестом: направление + сдвиг на старте
+  const resumeRef = useRef({ dir: 0, startX: 0 })
+  // Режим появления центральной панели: 'cascade' — каскад карточек
+  // (первый mount, прыжок через несколько дней), 'slide' — приехала свайпом
+  const [navMode, setNavMode] = useState('cascade')
+  const [dragActive, setDragActive] = useState(false)
+  // Трек сбросим в useLayoutEffect ВМЕСТЕ с монтажом новых панелей:
+  // trackX.set(0) синхронно ДО рендера показывал бы старый день на один кадр
+  const trackResetRef = useRef(false)
+
+  const finishTransition = useCallback(() => {
+    const t = transitionRef.current
+    transitionRef.current = null
+    resumeRef.current = { dir: 0, startX: 0 }
+    if (!t) return
+    setNavMode('slide')
+    setSelectedDate(t.target)
+    setDotDate(t.target) // страховка: точки всегда в финальном положении
+    trackResetRef.current = true
+  }, [setDotDate])
+
+  // Вызовется после КАЖДОГО рендера; флаг гарантирует, что сброс трека
+  // выполнится ровно один раз — в кадре, где новые панели уже в DOM,
+  // но браузер ещё не рисовал (после layout-effect до paint).
+  useLayoutEffect(() => {
+    if (trackResetRef.current) {
+      trackResetRef.current = false
+      trackX.set(0)
+    }
+    // Резерв высоты: трек держит высоту = самый высокий из трёх дней
+    // (текущий + соседи). Смена дня пересоздаёт панели, и без резерва
+    // высота трека «схлопывалась/растягивалась», из-за чего контент под
+    // расписанием резко подпрыгивал сразу после доводки.
+    const track = trackRef.current
+    if (!track) return
+    let maxH = 0
+    for (const pane of track.children) {
+      if (pane && pane.clientHeight > maxH) maxH = pane.clientHeight
+    }
+    if (maxH > 0) {
+      const px = `${Math.ceil(maxH)}px`
+      if (track.style.minHeight !== px) track.style.minHeight = px
+    }
+  })
+
+  // Остановить любую текущую анимацию трека (доводку/возврат).
+  // Вызывается перед началом нового жеста или программного перехода.
+  const stopSettle = useCallback(() => {
+    const s = settleAnimRef.current
+    if (s) {
+      s.stop()
+      settleAnimRef.current = null
+    }
+  }, [])
+
+  // Единая «приземляющая» доводка трека: возврат в 0 (не-свайп)
+  // или доезд к краю (смена дня). Контролы сохраняются в settleAnimRef.
+  const settleTo = useCallback((x) => {
+    stopSettle()
+    const anim = animate(trackX, x, trackSettle)
+    settleAnimRef.current = anim
+    anim.then(
+      () => { if (settleAnimRef.current === anim) settleAnimRef.current = null },
+      () => {},
+    )
+  }, [stopSettle, trackX])
+
+  // Свайп/флик за порог: программный переход — трек пружиной до края
+  const goPage = useCallback((dir) => {
+    if (transitionRef.current) return
+    stopSettle() // прерываем возврат в 0, если он ещё ехал
+    const from = selectedDateRef.current
+    const target = toISODate(addDays(fromISODate(from), dir))
+    // Точки недели обновляем МГНОВЕННО — пилюля летит, пока трек едет к краю
+    setDotDate(target)
+    const width = viewportRef.current?.clientWidth || 0
+    if (width <= 0) {
+      setNavMode('slide')
+      setSelectedDate(target)
+      trackResetRef.current = true
+      return
+    }
+    const controls = animate(trackX, -dir * width, trackSettle)
+    transitionRef.current = { target, dir, controls }
+    // Второй колбэк гасит отмену (новый жест прервал доводку через .stop())
+    controls.then(finishTransition, () => {})
+  }, [finishTransition, setDotDate, stopSettle, trackX])
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 15000)
@@ -116,11 +231,7 @@ function HomePage() {
   const today = toISODate(now)
   const nowMinutes = now.getHours() * 60 + now.getMinutes()
 
-  const changeDay = useCallback((dir) => {
-    setSelectedDate((current) => toISODate(addDays(fromISODate(current), dir)))
-  }, [])
-
-  const weekStart = useMemo(() => startOfWeek(fromISODate(selectedDate)), [selectedDate])
+  const weekStart = useMemo(() => startOfWeek(fromISODate(dotDate)), [dotDate])
   const weekDates = useMemo(
     () => Array.from({ length: 7 }, (_, i) => toISODate(addDays(weekStart, i))),
     [weekStart],
@@ -135,122 +246,87 @@ function HomePage() {
     [selectedDate],
   )
 
-  /* ---------- Свайп дней (drag-follow) ----------
-   * Позиция трека обновляется напрямую через DOM (без setState на каждый
-   * кадр), поэтому жест плавный. Вертикальный скролл страницы не ломается:
-   * сначала «замок направления», затем ведение панелей. */
-  const onPointerDown = useCallback((e) => {
-    if (phase !== 'idle' || gestureRef.current) return
-    if (e.pointerType === 'mouse' && e.button !== 0) return
-    suppressClickRef.current = false
-    gestureRef.current = {
-      pointerId: e.pointerId,
-      startX: e.clientX,
-      startY: e.clientY,
-      lastX: e.clientX,
-      lastT: performance.now(),
-      vx: 0,
-      dx: 0,
-      locked: false,
+  const onTrackDragStart = useCallback(() => {
+    // Если отпущенная ранее доводка ещё едет к краю — новый жест её
+    // перехватывает и продолжает от текущего сдвига (без скачка).
+    // ВАЖНО: останавливаем контролы и доводки СРАЗУ, иначе программная
+    // анимация продолжит писать в trackX параллельно с пальцем = борьба.
+    stopSettle()
+    setDragActive(true)
+    const t = transitionRef.current
+    if (t) {
+      t.controls.stop()
+      transitionRef.current = null
+      resumeRef.current = { dir: t.dir, startX: trackX.get() }
+      return
     }
-  }, [phase])
+    resumeRef.current = { dir: 0, startX: 0 }
+  }, [stopSettle, trackX])
 
-  const onPointerMove = useCallback((e) => {
-    const g = gestureRef.current
-    // Важно: во время ведения phase уже 'drag', поэтому блокируем только 'settling'
-    if (!g || e.pointerId !== g.pointerId || phase === 'settling') return
-    const dx = e.clientX - g.startX
-    const dy = e.clientY - g.startY
-
-    if (!g.locked) {
-      if (Math.abs(dx) < 8) return
-      if (Math.abs(dx) <= Math.abs(dy)) {
-        // Вертикальный жест — отдаём скроллу страницы
-        gestureRef.current = null
-        return
+  // Конец жеста: сдвиг/флик за порог — смена дня (трек пружиной до края),
+  // иначе пружина возвращает трек в 0. Доводку всегда делаем сами,
+  // т.к. у трека нет dragConstraints (см. выше).
+  const onTrackDragEnd = useCallback((_, info) => {
+    setDragActive(false)
+    lastDragEndRef.current = performance.now()
+    const width = viewportRef.current?.clientWidth || 1
+    // Жест продолжил едущий к краю переход: прогресс считаем от сдвига
+    // на старте перехвата (а не от 0 — иначе «доеханный» переход отменится)
+    const resume = resumeRef.current
+    resumeRef.current = { dir: 0, startX: 0 }
+    if (transitionRef.current) return
+    if (resume.dir !== 0) {
+      const total = resume.startX + info.offset.x // сдвиг от начала доводки
+      const done = -resume.dir * total / width // доля пути к краю [0..1+]
+      if (done > 0.4 || (-resume.dir * info.velocity.x > SWIPE_VELOCITY && done > 0.12)) {
+        goPage(resume.dir)
+      } else {
+        // Захваченный переход отменили — возвращаемся на текущую дату
+        setDotDate(selectedDateRef.current)
+        settleTo(0)
       }
-      g.locked = true
-      suppressClickRef.current = true
-      setPhase('drag') // класс .dragging: курсор/запрет выделения текста
-    }
-
-    const t = performance.now()
-    const dt = t - g.lastT
-    if (dt > 0) g.vx = g.vx * 0.6 + ((e.clientX - g.lastX) / dt) * 0.4
-    g.lastX = e.clientX
-    g.lastT = t
-    g.dx = dx
-
-    const track = trackRef.current
-    if (track) track.style.transform = `translate3d(${dx}px, 0, 0)`
-  }, [phase])
-
-  const finishGesture = useCallback((pointerId, allowCommit) => {
-    const g = gestureRef.current
-    if (!g || pointerId !== g.pointerId) return
-    gestureRef.current = null
-    if (!g.locked) {
-      setPhase('idle')
       return
     }
-
-    const track = trackRef.current
-    if (!track) {
-      setPhase('idle')
+    const { offset, velocity } = info
+    let dir = 0
+    if (offset.x <= -SWIPE_OFFSET || velocity.x <= -SWIPE_VELOCITY) dir = 1
+    else if (offset.x >= SWIPE_OFFSET || velocity.x >= SWIPE_VELOCITY) dir = -1
+    if (dir === 0) {
+      settleTo(0)
       return
     }
+    goPage(dir)
+  }, [goPage, setDotDate, settleTo])
 
-    const width = carouselRef.current?.clientWidth || 1
-    const { dx, vx } = g
-    // Доводим до соседнего дня: большой сдвиг или быстрый флинг в сторону свайпа
-    const commit = allowCommit
-      && (Math.abs(dx) > width * 0.22
-        || (Math.abs(vx) > 0.45 && Math.sign(vx) === Math.sign(dx) && Math.abs(dx) > 20))
-
-    setPhase('settling')
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const dur = reduceMotion ? 0 : SETTLE_MS
-    if (commit) {
-      const dir = dx < 0 ? 1 : -1
-      track.style.transition = `transform ${dur}ms cubic-bezier(0.25, 0.8, 0.35, 1)`
-      track.style.transform = `translate3d(${dir * -width}px, 0, 0)`
-      window.setTimeout(() => {
-        changeDay(dir) // useLayoutEffect ниже мгновенно вернёт трек в 0 уже с новым днём
-        setPhase('idle')
-      }, dur + 10)
-    } else {
-      track.style.transition = `transform ${dur}ms cubic-bezier(0.25, 0.8, 0.35, 1)`
-      track.style.transform = 'translate3d(0, 0, 0)'
-      window.setTimeout(() => {
-        track.style.transition = 'none'
-        setPhase('idle')
-      }, dur + 10)
+  // Тап по точке недели: несколько дней подряд — каскад (видно, куда прыгнули),
+  // соседний день — как свайп (трек пружиной до края). Доводка не прерывается.
+  const pickDate = useCallback((iso) => {
+    stopSettle() // тап во время возврата в 0 — начинаем прыжок с чистого трека
+    const from = selectedDateRef.current
+    if (iso === from || transitionRef.current) return
+    const diffDays = Math.round((fromISODate(iso) - fromISODate(from)) / 86400000)
+    if (Math.abs(diffDays) === 1) {
+      goPage(diffDays)
+      return
     }
-  }, [changeDay])
+    setDotDate(iso) // при каскадном прыжке точки обновляем сразу же
+    setNavMode('cascade')
+    setSelectedDate(iso)
+  }, [goPage, setDotDate, stopSettle])
 
-  const onPointerUp = useCallback((e) => finishGesture(e.pointerId, true), [finishGesture])
-  const onPointerCancel = useCallback((e) => finishGesture(e.pointerId, false), [finishGesture])
+  // Активная точка недели: motion-пилюля перелетает между датами (layoutId)
+  const dotPill = (date) => (date === dotDate
+    ? <motion.span className="dot-pill" layoutId="day-dot-pill" transition={springSoft} />
+    : null)
 
-  // Гасим клик по карточке/ссылке, если это был свайп
+  // Клик после свайпа не должен открывать урок: ловим на capture-фазе,
+  // но только в коротком окне (~350мс) после конца жеста
   const onClickCapture = useCallback((e) => {
-    if (suppressClickRef.current) {
+    if (performance.now() - lastDragEndRef.current < 350) {
       e.preventDefault()
       e.stopPropagation()
-      suppressClickRef.current = false
     }
   }, [])
-
-  // После смены дня сбрасываем позицию трека в 0 до отрисовки (без «мигания»)
-  const lastDateRef = useRef(selectedDate)
-  useLayoutEffect(() => {
-    if (lastDateRef.current === selectedDate) return
-    lastDateRef.current = selectedDate
-    const track = trackRef.current
-    if (track) {
-      track.style.transition = 'none'
-      track.style.transform = 'translate3d(0, 0, 0)'
-    }
-  }, [selectedDate])
 
   return (
     <div className="wrap page-home">
@@ -262,33 +338,44 @@ function HomePage() {
             <button
               key={date}
               type="button"
-              className={`day-dot${date === selectedDate ? ' active' : ''}${isToday(date) ? ' today' : ''}`}
-              onClick={() => setSelectedDate(date)}
+              className={`day-dot${date === dotDate ? ' active' : ''}${isToday(date) ? ' today' : ''}`}
+              onClick={() => pickDate(date)}
               aria-label={`${DAY_LABELS[key]}, ${formatRuDate(date)}`}
-              aria-current={date === selectedDate ? 'date' : undefined}
+              aria-current={date === dotDate ? 'date' : undefined}
             >
               <span className="dot-label">{DAY_LABELS[key]}</span>
-              <span className="dot-num">{fromISODate(date).getDate()}</span>
+              <span className="dot-num">
+                {dotPill(date)}
+                <span className="dot-num-text">{fromISODate(date).getDate()}</span>
+              </span>
             </button>
           )
         })}
       </nav>
 
       <main>
-        <div
-          className={`day-carousel${phase !== 'idle' ? ' dragging' : ''}`}
-          ref={carouselRef}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
-          onClickCapture={onClickCapture}
-        >
-          <div className="day-track" ref={trackRef}>
+        {/* Карусель на motion: три панели (вчера/сегодня/завтра) всегда
+            смонтированы — соседний день виден уже во время жеста.
+            Палец ведёт панели 1:1 (trackX), вертикальный жест уходит скроллу
+            страницы (dragDirectionLock), свайп/флик за порог — программный
+            переход пружиной до края (goPage), недотянули — пружина в 0 */}
+        <div className={`day-carousel${dragActive ? ' dragging' : ''}`} ref={viewportRef}>
+          <motion.div
+            className="day-track"
+            ref={trackRef}
+            style={{ x: trackX, touchAction: 'pan-y' }}
+            drag="x"
+            dragDirectionLock
+            dragMomentum={false}
+            onDragStart={onTrackDragStart}
+            onDragEnd={onTrackDragEnd}
+            onClickCapture={onClickCapture}
+          >
             <DayPane
               key={prevDate}
               iso={prevDate}
               side="prev"
+              intro={false}
               template={template}
               overrides={overrides}
               notes={notes}
@@ -300,6 +387,7 @@ function HomePage() {
             <DayPane
               key={selectedDate}
               iso={selectedDate}
+              intro={navMode === 'cascade'}
               template={template}
               overrides={overrides}
               notes={notes}
@@ -312,6 +400,7 @@ function HomePage() {
               key={nextDate}
               iso={nextDate}
               side="next"
+              intro={false}
               template={template}
               overrides={overrides}
               notes={notes}
@@ -320,7 +409,7 @@ function HomePage() {
               nowMinutes={nowMinutes}
               today={today}
             />
-          </div>
+          </motion.div>
         </div>
 
         {/* Объявления выключены флагом VITE_ENABLE_ANNOUNCEMENTS (config/features.js) */}

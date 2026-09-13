@@ -4,6 +4,10 @@
   touch-action: pan-y; /* вертикальный скролл страницы остаётся нативным */
   overflow-x: clip;
   margin: 0 0 16px;
+  /* Высота трека меняется между днями (разное число пар); запрещаем
+     браузеру «подруливать» прокрутку под этот контент (scroll anchoring),
+     иначе панель может незаметно съезжать вверх после свайпа */
+  overflow-anchor: none;
 }
 
 .day-carousel.dragging {
@@ -17,14 +21,15 @@
   position: relative;
   transform: translate3d(0, 0, 0);
   will-change: transform;
-  
+  /* Тот же запрет scroll-anchor на уровне самого трека */
+  overflow-anchor: none;
 }
 
 /* Текущая панель задаёт высоту трека, соседи — абсолютные, за краями */
 .day-pane {
   min-width: 0;
   min-height: 60vh;
-  
+
 }
 
 .day-pane.prev,
@@ -36,8 +41,8 @@
   pointer-events: none;
 }
 
-.day-pane.prev { transform: translateX(-100%); }
-.day-pane.next { transform: translateX(100%); }
+.day-pane.prev { transform: translateX(-100%) translateY(-6px); }
+.day-pane.next { transform: translateX(100%) translateY(-6px); }
 
 
 

@@ -1,18 +1,17 @@
-import { CalendarRange, ClipboardCheck, Megaphone, Repeat2 } from 'lucide-react'
-import { announcementsEnabled } from '../config/features'
+import { motion } from 'motion/react'
+import { CalendarRange, ClipboardCheck, Repeat2 } from 'lucide-react'
+import { springSnappy } from '../utils/anim'
 
 const TABS = [
   { id: 'template', label: 'Шаблон', Icon: Repeat2 },
   { id: 'date', label: 'Дата', Icon: CalendarRange },
-  { id: 'attendance', label: 'Посещаемость', Icon: ClipboardCheck },
-  // Вкладка объявлений отключается флагом VITE_ENABLE_ANNOUNCEMENTS
-  { id: 'announcements', label: 'Объявления', Icon: Megaphone, flag: announcementsEnabled },
-].filter((t) => t.flag !== false)
+  { id: 'attendance', label: 'Отметки', Icon: ClipboardCheck },
+]
 
 /**
  * Нижний таб-бар админки — тот же стеклянный стиль, что у
  * основного TabBar главной страницы (.tab-bar), но управляется
- * состоянием (кнопки вместо NavLink).
+ * состоянием (кнопки вместо NavLink). Активная вкладка — motion-пилюля.
  */
 function AdminTabBar({ tab, onChange }) {
   return (
@@ -25,6 +24,13 @@ function AdminTabBar({ tab, onChange }) {
           aria-current={tab === id ? 'page' : undefined}
           onClick={() => onChange(id)}
         >
+          {tab === id && (
+            <motion.span
+              className="tab-pill"
+              layoutId="admin-tab-pill"
+              transition={springSnappy}
+            />
+          )}
           <Icon size={22} aria-hidden="true" />
           <span className="tab-label">{label}</span>
         </button>

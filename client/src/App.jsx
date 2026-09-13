@@ -1,10 +1,12 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
 import HomePage from './pages/HomePage.jsx'
 import MaterialsPage from './pages/MaterialsPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import LessonPage from './pages/LessonPage.jsx'
 import TabBar from './components/TabBar.jsx'
+import { fadeUp } from './utils/anim'
 
 /* На вложенных/flow-страницах (урок, админка) таб-бар прячем,
  * чтобы не мешал формам и навигации назад */
@@ -15,14 +17,26 @@ function Shell() {
   const showTabs = !TAB_HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))
   return (
     <>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/materials" element={<MaterialsPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/lesson/:date/:lessonKey" element={<LessonPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      {/* Плавный переход между страницами: уходит старая, приходит новая */}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          className="page-transition"
+          key={pathname}
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+        >
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/materials" element={<MaterialsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/lesson/:date/:lessonKey" element={<LessonPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
       {showTabs && <TabBar />}
     </>
   )

@@ -1,0 +1,37 @@
+/* Плавные анимации (motion): пилюля активной вкладки, переход страниц,
+   раскрытие секций материалов, курсор свайпа, reduced-motion. */
+
+.tab-item { position: relative; overflow: hidden; }
+
+.tab-item > svg,
+.tab-item > .tab-label { position: relative; z-index: 1; }
+
+.tab-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  z-index: 0;
+}
+
+/* Активная вкладка: только цвет текста, фон рисует пилюля */
+.tab-item.active { background: transparent; }
+
+/* Обёртка перехода между страницами (App.jsx) */
+.page-transition { min-height: 40vh; }
+
+/* Раскрытие секций материалов: высота анимируется, контент обрезан */
+.subject-body-anim { overflow: hidden; }
+
+/* Свайп карусели: курсор-ладонь */
+.day-carousel { cursor: grab; }
+.day-carousel.dragging { cursor: grabbing; }
+
+/* Уважение системной настройки: гасим CSS-переходы тоже
+   (JS-анимации motion уже отключаются через MotionConfig) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

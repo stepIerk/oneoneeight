@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAttendance, useAttendanceHistory, saveAttendance, tsToDate } from '../firebase/data'
+import { itemVariants, listVariants } from '../utils/anim'
 import studentsData from '../data/students.json'
 import {
   formatRuDate, todayISO, weekdayKeyOf, WEEKDAY_TITLES, DAY_LABELS,
@@ -177,11 +179,21 @@ function AttendanceTab() {
           )}
         </div>
 
-        <ul className="attendance-list">
+        <motion.ul
+          className="attendance-list"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+          key={date}
+        >
           {STUDENTS.map((name) => {
             const st = records[name] ?? null
             return (
-              <li className="attendance-item" key={name}>
+              <motion.li
+                className="attendance-item"
+                variants={itemVariants}
+                key={name}
+              >
                 <span className="attendance-name">{name}</span>
                 <span className="attendance-status" role="group" aria-label={`Статус: ${name}`}>
                   {STATUSES.map((s) => (
@@ -198,15 +210,15 @@ function AttendanceTab() {
                     </button>
                   ))}
                 </span>
-              </li>
+              </motion.li>
             )
           })}
           {!STUDENTS.length && (
-            <li className="muted">
+            <motion.li className="muted" variants={itemVariants}>
               Список пуст — добавьте студентов в <code>src/data/students.json</code>
-            </li>
+            </motion.li>
           )}
-        </ul>
+        </motion.ul>
 
         {error && <p className="form-error">{error}</p>}
 

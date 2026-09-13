@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { ClipboardList, DoorOpen, FileText, Link2, User } from 'lucide-react'
 import { lessonKey } from '../utils/scheduleModel'
+import { itemVariants } from '../utils/anim'
 
 function formatTimeRange(start, end) {
   return `${start}–${end}`
 }
 
-function LessonCard({ lesson, date, status, progress, notes = [], links = [], homework = [] }) {
+function LessonCard({ lesson, date, status, progress, notes = [], links = [], homework = [], animated = false }) {
   const navigate = useNavigate()
   const isEmpty = Boolean(lesson.empty)
   const kind = lesson.kind ?? 'other'
@@ -18,8 +20,11 @@ function LessonCard({ lesson, date, status, progress, notes = [], links = [], ho
   const lessonLinks = isEmpty ? [] : links.filter((l) => l.lessonKey === key && l.date === date)
   const lessonHw = isEmpty ? [] : homework.filter((h) => h.lessonKey === key && h.date === date)
 
+  const articleProps = animated ? { variants: itemVariants } : {}
+  const Article = animated ? motion.article : 'article'
+
   return (
-    <article
+    <Article
       className={[
         'lesson',
         kind,
@@ -28,6 +33,7 @@ function LessonCard({ lesson, date, status, progress, notes = [], links = [], ho
       ]
         .filter(Boolean)
         .join(' ')}
+      {...articleProps}
     >
       <div className="time">
         <div className="time-main">{formatTimeRange(lesson.start, lesson.end)}</div>
@@ -119,7 +125,7 @@ function LessonCard({ lesson, date, status, progress, notes = [], links = [], ho
           </button>
         </div>
       )}
-    </article>
+    </Article>
   )
 }
 

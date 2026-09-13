@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Globe, Library, Link2, Map as MapIcon, Plus, Search, X } from 'lucide-react'
 import { useLessonLinks, useScheduleData, addGeneralLink, deleteLessonLink } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
 import { collectSubjects } from '../utils/scheduleModel'
+import { listVariants, itemVariants, springSoft } from '../utils/anim'
 import SubjectSection from '../components/SubjectLinks.jsx'
 import floorPlanPdf from '../assets/Планы этажей.pdf'
 
@@ -33,7 +35,11 @@ function GeneralSection({ links, open, onToggle }) {
       setFormOpen(false)
     } catch (err) {
       console.error(err)
-      setError('Не удалось сохранить ссылку')
+      setError(
+        err?.code === 'permission-denied'
+          ? 'Нет прав на запись — опубликуйте актуальный файл firestore.rules (Firebase Console → Firestore Database → Rules → Publish)'
+          : `Не удалось сохранить ссылку${err?.message ? `: ${err.message}` : ''}`,
+      )
     } finally {
       setBusy(false)
     }
@@ -66,33 +72,53 @@ function GeneralSection({ links, open, onToggle }) {
         <span className={`subject-chevron${open ? ' open' : ''}`} aria-hidden="true">›</span>
       </button>
 
-      {open && (
-        <div className="subject-body">
-          {links.length === 0 && !formOpen && (
-            <p className="mat-empty">Пока пусто — добавьте ссылку, которая может пригодиться группе.</p>
-          )}
-          <div className="mat-list">
-            {links.map((l) => (
-              <span key={l.id} className="attach-item link">
-                <a href={l.url} target="_blank" rel="noreferrer">
-                  <Link2 size={14} className="attach-icon" aria-hidden="true" />
-                  {l.label || l.url}
-                </a>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    className="attach-delete"
-                    title="Удалить ссылку"
-                    onClick={() => remove(l)}
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                )}
-              </span>
-            ))}
-          </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="general-body"
+            className="subject-body-anim"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={springSoft}
+          >
+            <div className="subject-body">
+              {links.length === 0 && !formOpen && (
+                <p className="mat-empty">Пока пусто — добавьте ссылку, которая может пригодиться группе.</p>
+              )}
+              {links.length > 0 && (
+                <motion.div
+                  className="mat-list"
+                  variants={listVariants}
+                  initial="hidden"
+                  animate="show"
+                >
+                  {links.map((l) => (
+                    <motion.span
+                      key={l.id}
+                      className="attach-item link"
+                      variants={itemVariants}
+                    >
+                      <a href={l.url} target="_blank" rel="noreferrer">
+                        <Link2 size={14} className="attach-icon" aria-hidden="true" />
+                        {l.label || l.url}
+                      </a>
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          className="attach-delete"
+                          title="Удалить ссылку"
+                          onClick={() => remove(l)}
+                        >
+                          <X size={14} aria-hidden="true" />
+                        </button>
+                      )}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              )}
 
-          {formOpen ? (
+              {formOpen ? (
             <div className="subject-form">
               <form className="attach-form" onSubmit={submit}>
                 <input
@@ -125,8 +151,10 @@ function GeneralSection({ links, open, onToggle }) {
               добавить общую ссылку
             </button>
           )}
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

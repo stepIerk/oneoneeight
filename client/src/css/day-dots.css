@@ -44,6 +44,7 @@
 }
 
 .dot-num {
+  position: relative;
   width: 37px;
   height: 37px;
   display: grid;
@@ -72,8 +73,9 @@
 .day-dot.active .dot-num {
   border-color: transparent;
   color: #fff;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 20px rgba(109, 93, 252, 0.32);
+  /* Фон рисует motion-пилюля (.dot-pill, layoutId) — градиент перелетает */
+  background: transparent;
+  box-shadow: none;
 }
 
 .day-dot.active.today .dot-num {
@@ -81,4 +83,15 @@
   border-color: var(--green);
   box-shadow: 0 0 0 2px #fff, 0 8px 20px rgba(22, 163, 74, 0.35);
 }
+
+/* Motion-пилюля активной даты: градиент перелетает между датами (layoutId) */
+.dot-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 20px rgba(109, 93, 252, 0.32);
+}
+
+.dot-num-text { position: relative; z-index: 1; }
 

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   ArrowLeft, Clock, MapPin, Plus, Trash2, User, X,
 } from 'lucide-react'
@@ -9,6 +10,7 @@ import {
 } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
 import { getDaySchedule, lessonKey as makeLessonKey } from '../utils/scheduleModel'
+import { fadeUp, itemVariants, listVariants } from '../utils/anim'
 import { fromISODate, formatRuDate, WEEKDAY_TITLES, weekdayKeyOf } from '../utils/dates'
 import { LessonNotes, LessonLinks } from '../components/LessonMaterials.jsx'
 import floorPlanPdf from '../assets/Планы этажей.pdf'
@@ -137,7 +139,13 @@ function LessonPage() {
         </span>
       </nav>
 
-      <header className="lesson-header" data-kind={kind}>
+      <motion.header
+        className="lesson-header"
+        data-kind={kind}
+        variants={fadeUp}
+        initial="hidden"
+        animate="show"
+      >
         <div className="lesson-kind-row">
           {typeLabel && (
             <span className="kind-badge">
@@ -185,36 +193,54 @@ function LessonPage() {
             Урок не найден в расписании на эту дату — возможно, расписание изменилось.
           </p>
         )}
-      </header>
+      </motion.header>
 
       {subject && (
-        <div className="lesson-body">
-          <section className="lesson-block">
+        <motion.div
+          className="lesson-body"
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.section className="lesson-block" variants={fadeUp}>
             <div className="block-head">
               <h2>Домашнее задание</h2>
               {lessonHw.length > 0 && <span className="block-count">{lessonHw.length}</span>}
             </div>
             {lessonHw.length > 0 && (
-              <ul className="task-list">
-                {lessonHw.map((h) => (
-                  <li key={h.id} className="task-item">
-                    <span className="task-check" aria-hidden="true" />
-                    <span className="task-text">{h.text}</span>
-                    {canDeleteHw && (
-                      <button
-                        type="button"
-                        className="row-delete"
-                        title="Удалить задание"
-                        aria-label="Удалить домашнее задание"
-                        disabled={hwBusy}
-                        onClick={() => removeHw(h)}
-                      >
-                        <Trash2 size={15} aria-hidden="true" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <motion.ul
+                className="task-list"
+                variants={listVariants}
+                initial="hidden"
+                animate="show"
+              >
+                <AnimatePresence initial={false}>
+                  {lessonHw.map((h) => (
+                    <motion.li
+                      key={h.id}
+                      className="task-item"
+                      variants={itemVariants}
+                      exit="exit"
+                      layout
+                    >
+                      <span className="task-check" aria-hidden="true" />
+                      <span className="task-text">{h.text}</span>
+                      {canDeleteHw && (
+                        <button
+                          type="button"
+                          className="row-delete"
+                          title="Удалить задание"
+                          aria-label="Удалить домашнее задание"
+                          disabled={hwBusy}
+                          onClick={() => removeHw(h)}
+                        >
+                          <Trash2 size={15} aria-hidden="true" />
+                        </button>
+                      )}
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
+              </motion.ul>
             )}
 
             {!hwFormOpen ? (
@@ -251,7 +277,7 @@ function LessonPage() {
                 </div>
               </form>
             )}
-          </section>
+          </motion.section>
 
           <section className="lesson-block">
             <div className="block-head">
@@ -271,7 +297,7 @@ function LessonPage() {
             </div>
             <LessonLinks subject={subject} lessonKey={lessonKey} date={date} links={links} />
           </section>
-        </div>
+        </motion.div>
       )}
 
       <Link className="lesson-bottom-link" to="/">К расписанию</Link>

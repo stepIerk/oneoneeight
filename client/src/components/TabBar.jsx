@@ -1,5 +1,7 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { CalendarDays, BookOpenText, UserRound } from 'lucide-react'
+import { springSnappy } from '../utils/anim'
 
 const TABS = [
   { to: '/', label: 'Расписание', Icon: CalendarDays, end: true },
@@ -9,22 +11,40 @@ const TABS = [
 
 /**
  * Нижний стеклянный таб-бар в стиле iOS: фиксирован внизу, отодвинут
- * от safe-area (home-индикатор), иконка + подпись.
+ * от safe-area (home-индикатор), иконка + подпись. Активная вкладка —
+ * motion-пилюля (layoutId): фон плавно перелетает между вкладками.
  */
 function TabBar() {
+  const { pathname } = useLocation()
+  const activeTo = pathname.startsWith('/materials')
+    ? '/materials'
+    : pathname.startsWith('/profile')
+      ? '/profile'
+      : '/'
   return (
     <nav className="tab-bar" aria-label="Основные разделы">
-      {TABS.map(({ to, label, Icon, end }) => (
-        <NavLink
-          key={to}
-          to={to}
-          end={end}
-          className={({ isActive }) => `tab-item${isActive ? ' active' : ''}`}
-        >
-          <Icon size={22} aria-hidden="true" />
-          <span className="tab-label">{label}</span>
-        </NavLink>
-      ))}
+      {TABS.map(({ to, label, Icon, end }) => {
+        const active = to === activeTo
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={`tab-item${active ? ' active' : ''}`}
+            aria-current={active ? 'page' : undefined}
+          >
+            {active && (
+              <motion.span
+                className="tab-pill"
+                layoutId="tab-pill"
+                transition={springSnappy}
+              />
+            )}
+            <Icon size={22} aria-hidden="true" />
+            <span className="tab-label">{label}</span>
+          </NavLink>
+        )
+      })}
     </nav>
   )
 }

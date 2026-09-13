@@ -2,10 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, CalendarDays, GraduationCap, Hash, LogIn, LogOut,
-  Moon, Settings2, ShieldCheck, Sun, UserRound, Users,
+  Settings2, ShieldCheck, UserRound, Users,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
 import { useScheduleData } from '../firebase/data'
 import { signInAdmin, signOut } from '../firebase/auth'
 import InstallHint from '../components/InstallHint.jsx'
@@ -78,7 +77,6 @@ function LoginForm({ onCollapse }) {
 export default function ProfilePage() {
   const { user, isAdmin, isLeader, loading, firebaseReady } = useAuth()
   const { template } = useScheduleData()
-  const { theme, toggleTheme } = useTheme()
   // Форма входа скрыта по умолчанию — раскрывается по кнопке «Вход для админа»
   const [loginOpen, setLoginOpen] = useState(false)
 

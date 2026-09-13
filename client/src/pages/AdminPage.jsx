@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -15,6 +16,7 @@ import AttendanceTab from '../components/AttendanceTab.jsx'
 import AdminTabBar from '../components/AdminTabBar.jsx'
 import { announcementsEnabled } from '../config/features'
 import { dayMeta } from '../utils/scheduleModel'
+import { fadeUp } from '../utils/anim'
 import { WEEK_KEYS, DAY_LABELS, WEEKDAY_TITLES, todayISO, formatRuDate, weekdayKeyOf } from '../utils/dates'
 
 /* ------------------------------ Вход ------------------------------ */
@@ -398,10 +400,28 @@ function AdminPanel() {
         </div>
       </div>
 
-      {tab === 'template' && <TemplateTab />}
-      {tab === 'date' && <DateTab />}
-      {tab === 'attendance' && <AttendanceTab />}
-      {announcementsEnabled && tab === 'announcements' && <AnnouncementsTab />}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {tab === 'template' && (
+          <motion.div key="tab-template" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+            <TemplateTab />
+          </motion.div>
+        )}
+        {tab === 'date' && (
+          <motion.div key="tab-date" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+            <DateTab />
+          </motion.div>
+        )}
+        {tab === 'attendance' && (
+          <motion.div key="tab-attendance" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+            <AttendanceTab />
+          </motion.div>
+        )}
+        {announcementsEnabled && tab === 'announcements' && (
+          <motion.div key="tab-announcements" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+            <AnnouncementsTab />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Вкладки разделов — в нижнем таб-баре (стиль основного приложения) */}
       <AdminTabBar tab={tab} onChange={setTab} />

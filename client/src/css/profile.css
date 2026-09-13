@@ -159,6 +159,7 @@
 .profile-facts dt svg { opacity: 0.6; }
 .profile-facts dd { margin: 0; font-weight: 700; text-align: right; }
 
-@media (max-width: 720px) {
-  .tab-bar { width: calc(100% - 16px); bottom: calc(12px + env(safe-area-inset-bottom)); }
-}
+/* Нижний таб-бар плавает на ФИКСИРОВАННОМ отступе: никаких env(safe-area-inset-bottom).
+   В standalone-PWA на iOS эта переменная ненулевая (домашняя полоса жеста внизу),
+   и панель начинала «уезжать» вверх. Нужное позиционирование уже задано
+   в tab-bar.css / media.css. */

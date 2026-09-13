@@ -2,13 +2,11 @@
 
 @media (max-width: 720px) {
   .wrap.page-home {
-    padding: calc(env(safe-area-inset-top) + 86px) 12px
-      calc(70px + env(safe-area-inset-bottom));
+    padding: calc(env(safe-area-inset-top) + 86px) 12px 70px;
   }
 
   .wrap {
-    padding: calc(env(safe-area-inset-top) + 22px) 12px
-      calc(70px + env(safe-area-inset-bottom));
+    padding: calc(env(safe-area-inset-top) + 22px) 12px 70px;
   }
 
   .day-dots {
