@@ -94,5 +94,5 @@
 
 
 @media (max-width: 720px) {
-  .tab-bar { width: calc(100% - 16px); bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .tab-bar { width: calc(100% - 16px); bottom: calc(8px + env(safe-area-inset-bottom)); }
 }
