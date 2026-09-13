@@ -1,0 +1,399 @@
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-bottom: 16px;
+}
+
+.admin-topbar h1 {
+  margin: 0;
+  font-size: clamp(22px, 4.5vw, 30px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.admin-topbar p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-card {
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+
+.admin-card h1 { margin: 0 0 12px; font-size: 22px; letter-spacing: -0.03em; }
+.admin-card h2 { margin: 0 0 10px; font-size: 17px; letter-spacing: -0.02em; }
+.admin-card h3 { margin: 18px 0 8px; font-size: 14px; color: var(--muted); }
+
+.admin-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 14px; }
+
+.admin-tabs .tab {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+}
+
+.admin-form { display: flex; flex-direction: column; gap: 10px; }
+
+.admin-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.field > span { font-weight: 600; color: var(--muted); }
+
+.field input,
+.field select,
+.field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-family: inherit;
+  background: var(--surface-strong);
+  color: var(--text);
+  min-width: 0;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.field-wide { flex: 1 1 100%; }
+.field-checkbox { flex-direction: row; align-items: center; gap: 8px; }
+.field-checkbox input { width: 18px; height: 18px; }
+
+.form-error { margin: 0; color: var(--red-on); font-size: 13px; }
+.muted { color: var(--muted); font-size: 13px; }
+
+.warn-note {
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--warn-line);
+  background: var(--warn-soft);
+  border-radius: 14px;
+  color: var(--warn-on);
+  font-size: 13px;
+}
+
+.admin-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.admin-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  font-size: 13.5px;
+}
+
+.admin-list a { color: var(--text); text-decoration: none; }
+.admin-list a:hover { color: var(--accent); }
+
+.day-editor { display: flex; flex-direction: column; gap: 12px; }
+
+.lesson-edit {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 0;
+}
+
+.lesson-edit legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 0 6px;
+}
+
+.lesson-edit-tools { display: inline-flex; gap: 4px; }
+
+.lesson-edit-tools button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text);
+}
+
+.lesson-edit-tools button.danger { color: var(--red-on); border-color: var(--red-line); background: var(--red-soft); }
+
+.lesson-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.day-editor-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
+}
+
+/* ---------- Превью дня во вкладке «Конкретная дата» ---------- */
+
+.day-preview {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.day-preview li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  font-size: 13px;
+  min-width: 0;
+}
+
+.day-preview-time {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  flex: none;
+  min-width: 100px;
+}
+
+.day-preview-subject {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.day-preview-pair {
+  margin-left: auto;
+  flex: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ---------- Посещаемость ---------- */
+
+.attendance-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.attendance-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.attendance-chip.present { background: var(--green-soft); color: var(--green-on); border-color: var(--green-line); }
+.attendance-chip.absent { background: var(--red-soft); color: var(--red-on); border-color: var(--red-line); }
+.attendance-chip.sick { background: var(--amber-soft); color: var(--amber-on); border-color: var(--amber-line); }
+.attendance-chip.unmarked { background: var(--type-bg); color: var(--muted); border-style: dashed; }
+
+/* Неделя: чипы дней с точкой «отмечено» (стиль .day-dots главной) */
+.attendance-week {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 12px 0 0;
+}
+
+.attendance-week-nav {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 44px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.attendance-week-nav:active { transform: scale(0.94); }
+
+.attendance-day-chip {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 2px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.attendance-day-chip:active { transform: scale(0.94); }
+
+.attendance-day-chip .chip-label { font-size: 10.5px; }
+.attendance-day-chip .chip-num { font-size: 14px; font-variant-numeric: tabular-nums; }
+
+/* Точка «на эту дату есть отметки» */
+.attendance-day-chip .chip-dot {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.attendance-day-chip.marked .chip-dot {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.attendance-day-chip.active {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 9px 25px rgba(109, 93, 252, 0.26);
+}
+
+.attendance-day-chip.active .chip-dot {
+  background: #7ef0ae;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
+}
+
+.attendance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attendance-list li {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  font-size: 14px;
+}
+
+.attendance-name { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+
+/* Сегментный переключатель статуса: три крупные кнопки 44px —
+   удобно попадать пальцем с телефона (Apple HIG: тапабельная цель ≥ 44px) */
+.attendance-status { 
+  display: inline-flex;
+   gap: 6px;
+   width: 100%;
+   align-items: center;
+    justify-content: center;
+   }
+
+.attendance-seg {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.12s ease;
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.attendance-seg:active { transform: scale(0.9); }
+
+/* Выбранный статус: цветная кнопка, без серости */
+.attendance-seg.active {
+  filter: none;
+  opacity: 1;
+  color: #fff;
+}
+
+.attendance-seg.present.active { background: var(--green); border-color: var(--green); }
+.attendance-seg.absent.active { background: var(--red); border-color: var(--red); }
+.attendance-seg.sick.active { background: var(--amber); border-color: var(--amber); }
+
+/* Строка истории */
+.attendance-history-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  padding: 8px 10px;
+  margin: -2px -2px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.attendance-history-row:active { background: var(--accent-soft); }
+
+
+

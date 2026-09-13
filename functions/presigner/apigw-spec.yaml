@@ -1,0 +1,38 @@
+openapi: "3.0.0"
+info:
+  title: schedule-presigner
+  version: "1.0.0"
+# Спецификация Yandex API Gateway.
+# 1. Создайте функцию (Cloud Functions) → скопируйте её ID
+# 2. Создайте сервисный аккаунт с ролью serverless.functions.invoker → скопируйте ID
+# 3. Вставьте оба ID ниже
+# 4. API Gateway → Create → вставьте эту спецификацию → получите публичный домен
+paths:
+  /:
+    options:
+      summary: CORS preflight
+      operationId: corsPreflight
+      responses:
+        "204":
+          description: No content
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        http_headers:
+          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Methods": "POST, OPTIONS"
+          "Access-Control-Allow-Headers": "Content-Type"
+        # Поле content обязательно для интеграции dummy и имеет тип
+        # map[тип контента -> данные] (по ключу "*" — значение по умолчанию)
+        content:
+          "*": ""
+    post:
+      summary: Выдать pre-signed URL
+      operationId: presign
+      responses:
+        "200":
+          description: OK
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: d4ejkkepbdfe2gph25ie
+        service_account_id: aje7t4qsskaa889m0upt

@@ -1,0 +1,98 @@
+/* ---------- Mobile ---------- */
+
+@media (max-width: 720px) {
+  .wrap.page-home {
+    padding: calc(env(safe-area-inset-top) + 86px) 12px
+      calc(70px + env(safe-area-inset-bottom));
+  }
+
+  .wrap {
+    padding: calc(env(safe-area-inset-top) + 22px) 12px
+      calc(70px + env(safe-area-inset-bottom));
+  }
+
+  .day-dots {
+    left: 8px;
+    right: 8px;
+    padding: 7px 4px;
+    gap: 2px;
+  }
+
+  .dot-num {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .tab {
+    flex-basis: 85px;
+    padding: 12px 8px;
+  }
+
+  .day-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .day-title {
+    font-size: 25px;
+    flex-wrap: wrap;
+  }
+
+  .lesson {
+    grid-template-columns: 70px 1fr;
+    gap: 9px;
+  }
+
+  .time {
+    padding: 12px 8px;
+    border-radius: 16px;
+  }
+
+  .time-main {
+    font-size: 13px;
+  }
+
+  .time-num {
+    font-size: 10px;
+  }
+
+  .card {
+    padding: 15px;
+    border-radius: 17px;
+  }
+
+  .subject {
+    font-size: 17px;
+  }
+
+  .details {
+    gap: 7px 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .pulse {
+    animation: none;
+  }
+
+  .tab,
+  .card,
+  .progress span,
+  .action-btn,
+  .action-arrow,
+  .install-chevron,
+  .card-go svg {
+    transition: none;
+  }
+}
+
+
+@media (max-width: 720px) {
+  .tab-bar { width: calc(100% - 16px); bottom: calc(12px + env(safe-area-inset-bottom)); }
+}

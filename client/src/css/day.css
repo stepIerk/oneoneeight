@@ -1,0 +1,41 @@
+/* ---------- Day ---------- */
+
+.day-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 6px 2px 14px;
+}
+
+.day-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.today-chip {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+
+.day-meta {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.schedule {
+  display: grid;
+  gap: 12px;
+}
+

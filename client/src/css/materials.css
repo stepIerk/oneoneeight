@@ -1,0 +1,145 @@
+/* ---------- Материалы: баннер карты, поиск, предметы ---------- */
+
+.page-materials { display: flex; flex-direction: column; gap: 14px; }
+
+.mat-list { display: flex; flex-direction: column; gap: 8px; }
+
+.floor-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #171b2e 0%, var(--accent) 60%, var(--accent-2) 100%);
+  color: #fff;
+  border-radius: 20px;
+  text-decoration: none;
+  box-shadow: 0 14px 36px rgba(35, 29, 103, 0.25);
+}
+
+.floor-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.floor-text { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.floor-text strong { font-size: 15px; }
+.floor-text span { font-size: 12.5px; color: rgba(255, 255, 255, 0.65); }
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  color: var(--muted);
+}
+
+.search-bar input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+}
+
+.search-bar input:focus { outline: none; }
+.search-bar:focus-within { border-color: var(--accent); }
+
+.search-clear {
+  flex: none;
+  display: flex;
+  padding: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.subject-list { display: flex; flex-direction: column; gap: 8px; }
+
+/* Иконка в шапке секции (у секции «Общие ссылки») */
+.subject-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.subject-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+.subject-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.subject-name { flex: 1; font-weight: 800; font-size: 15px; letter-spacing: -0.01em; }
+
+.subject-meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.subject-chevron {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.subject-chevron.open { transform: rotate(90deg); color: var(--accent); }
+
+.subject-body {
+  padding: 0 16px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subject-body .mat-list { padding-top: 8px; }
+.subject-form { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+
+.mat-empty-page { text-align: center; color: var(--muted); margin: 24px 0; }
+
+.trash-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+

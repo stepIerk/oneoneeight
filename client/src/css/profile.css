@@ -1,0 +1,164 @@
+/* ---------- Профиль ---------- */
+
+.page-profile { display: flex; flex-direction: column; gap: 14px; }
+
+.profile-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 24px;
+  color: #fff;
+    background: linear-gradient(135deg, #171b2e 0%, var(--accent) 60%, var(--accent-2) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 44px rgba(35, 29, 103, 0.28);
+}
+
+.profile-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(280px 140px at 90% 0%, rgba(255, 255, 255, 0.18), transparent 65%),
+    radial-gradient(220px 160px at 0% 100%, rgba(139, 124, 255, 0.4), transparent 60%);
+}
+
+.profile-hero > * { position: relative; }
+
+.profile-avatar-lg {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.profile-hero-text { min-width: 0; flex: 1; }
+.profile-hero-text strong { display: block; font-size: 16px; word-break: break-all; }
+
+.profile-card {
+  padding: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+}
+
+.profile-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 12px;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.profile-card h2 svg {
+  width: 28px;
+  height: 28px;
+  padding: 6px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.profile-user { display: flex; align-items: center; gap: 12px; }
+
+.profile-avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.profile-email { display: block; font-size: 15px; font-weight: 700; word-break: break-all; }
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--accent-soft);
+  color: var(--muted);
+}
+
+.role-badge.admin { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+.role-badge.leader { background: var(--green-soft); color: var(--green-on); }
+
+.profile-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.profile-actions-top { margin-top: 0; }
+.profile-actions .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 14px; }
+
+/* Свёрнутый блок входа на странице профиля */
+.login-collapsed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-collapsed .muted { flex: 1; min-width: 180px; margin: 0; }
+
+.login-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 14px;
+  width: 100%;
+}
+
+/* Переключатель темы */
+.theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.theme-row .muted { margin: 0; }
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 14px;
+}
+
+.profile-facts { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.profile-facts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 14px;
+}
+.profile-facts dt { color: var(--muted); font-weight: 600; display: inline-flex; align-items: center; gap: 7px; }
+.profile-facts dt svg { opacity: 0.6; }
+.profile-facts dd { margin: 0; font-weight: 700; text-align: right; }
+
+@media (max-width: 720px) {
+  .tab-bar { width: calc(100% - 16px); bottom: calc(12px + env(safe-area-inset-bottom)); }
+}

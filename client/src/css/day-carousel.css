@@ -1,0 +1,43 @@
+/* ---------- Карусель дней (свайп) ---------- */
+
+.day-carousel {
+  touch-action: pan-y; /* вертикальный скролл страницы остаётся нативным */
+  overflow-x: clip;
+  margin: 0 0 16px;
+}
+
+.day-carousel.dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grabbing;
+}
+
+/* Трек: трансформация двигает все панели синхронно (свайп) */
+.day-track {
+  position: relative;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  
+}
+
+/* Текущая панель задаёт высоту трека, соседи — абсолютные, за краями */
+.day-pane {
+  min-width: 0;
+  min-height: 60vh;
+  
+}
+
+.day-pane.prev,
+.day-pane.next {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.day-pane.prev { transform: translateX(-100%); }
+.day-pane.next { transform: translateX(100%); }
+
+
+

@@ -1,0 +1,269 @@
+/* ---------- Страница урока ---------- */
+
+.lesson-page { display: flex; flex-direction: column; gap: 14px; }
+
+.lesson-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 2px 0;
+}
+
+.lesson-top-date {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  box-shadow: var(--shadow-soft);
+  transition: 0.18s ease;
+  cursor: pointer;
+}
+
+.back-btn:hover {
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.back-pill { border-radius: 999px; background: var(--glass); backdrop-filter: blur(14px); }
+
+.lesson-header {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 22px 20px;
+  border-radius: 22px;
+  background:
+    radial-gradient(520px 220px at 100% -30px, rgba(var(--kind-rgb), 0.16), transparent 70%),
+    radial-gradient(240px 150px at -8% 108%, rgba(var(--kind-rgb), 0.09), transparent 62%),
+    var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.lesson-header[data-kind='lecture'] { --kind: var(--accent); --kind-rgb: 124, 108, 255; --kind-soft: var(--accent-soft); }
+.lesson-header[data-kind='practice'] { --kind: var(--blue); --kind-rgb: 59, 130, 246; --kind-soft: var(--blue-soft); }
+.lesson-header[data-kind='consult'] { --kind: var(--amber); --kind-rgb: 217, 119, 6; --kind-soft: var(--amber-soft); }
+.lesson-header[data-kind='other'] { --kind: var(--muted); --kind-rgb: 107, 114, 128; --kind-soft: var(--type-bg); }
+
+.lesson-header::after {
+  content: '';
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  right: -48px;
+  bottom: -80px;
+  border: 1px solid rgba(var(--kind-rgb), 0.4);
+  border-radius: 50%;
+  box-shadow: 0 0 0 26px rgba(var(--kind-rgb), 0.07), 0 0 0 52px rgba(var(--kind-rgb), 0.035);
+}
+
+.lesson-header > * { position: relative; }
+
+.lesson-kind-row { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-bottom: 12px; }
+
+.kind-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  background: var(--kind-soft);
+  color: var(--kind);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: var(--shadow-soft);
+}
+
+.kind-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--kind); }
+
+.lesson-sub { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+
+.lesson-header .lesson-title {
+  margin: 0;
+  font-size: clamp(30px, 6vw, 40px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.lesson-meta-rows { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+.meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--card-muted);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.meta-row svg { flex: none; color: var(--muted); }
+
+.meta-row.room { border-color: rgba(var(--kind-rgb), 0.35); }
+.meta-row.room svg { color: var(--kind); }
+
+.meta-room {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.meta-room:hover { text-decoration: underline; }
+
+.lesson-note { margin: 14px 2px 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+
+.lesson-missing { margin: 12px 0 0; font-size: 13px; color: var(--warn-on); }
+
+/* ---------- Страница урока: единый контейнер ---------- */
+
+.lesson-body { margin-top: 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.lesson-block { padding: 18px; }
+.lesson-block + .lesson-block { border-top: 1px solid var(--line); }
+.block-head { display: flex; align-items: baseline; gap: 9px; margin-bottom: 12px; }
+.block-head h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+.block-count { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+/* ---------- ДЗ как список задач ---------- */
+
+.task-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; }
+.task-item { position: relative; display: flex; align-items: flex-start; gap: 11px; padding: 10px 36px 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.55; }
+.task-item:last-child { border-bottom: none; }
+.task-item:first-child { padding-top: 2px; }
+.task-check { width: 20px; height: 20px; flex: none; margin-top: 1px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface-strong); }
+.task-text { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.task-item .row-delete, .file-row .row-delete { position: absolute; top: 50%; right: 0; transform: translateY(-50%); display: grid; place-items: center; width: 30px; height: 30px; border: none; border-radius: 9px; background: none; color: var(--muted); cursor: pointer; opacity: 0; transition: 0.15s ease; }
+@media (hover: none) { .task-item .row-delete, .file-row .row-delete { opacity: 1; } }
+.task-item:hover .row-delete, .task-item:focus-within .row-delete, .file-row:hover .row-delete, .file-row:focus-within .row-delete { opacity: 1; }
+.row-delete:hover { background: var(--red-soft); color: var(--red-on); }
+.row-delete:disabled { opacity: 0.4; cursor: default; }
+
+/* В строке-карточке кнопка удаления — внутри карточки, справа */
+.file-row .row-delete { right: 6px; }
+
+/* ---------- Конспекты и ссылки ---------- */
+/* Строки-карточки: крупная тапабельная цель (~44px по HIG), удобно с телефона */
+
+.file-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+.file-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 11px 42px 11px 13px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 14px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.file-row:active { background: var(--accent-soft); }
+
+.file-row a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.file-row a:hover { text-decoration: underline; }
+.row-icon { flex: none; }
+.link-group + .link-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.link-group h3 { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+
+/* ---------- Пустые состояния с CTA ---------- */
+
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 18px 12px; text-align: center; }
+.empty-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 6px; border-radius: 50%; background: var(--type-bg); color: var(--type-on); }
+.empty-state p { margin: 0 0 8px; font-size: 13.5px; color: var(--muted); }
+.empty-cta { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px; border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.15s ease; }
+.empty-cta:hover { filter: brightness(1.07); }
+.lesson-bottom-link { display: inline-flex; align-self: center; margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: none; }
+.lesson-bottom-link:hover { color: var(--accent); }
+
+@media (max-width: 720px) {
+  .lesson-top-date { display: none; }
+  .lesson-body { border-radius: 16px; }
+  .lesson-block { padding: 15px; }
+}
+
+.attach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.attach-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.attach-add:hover { color: var(--accent); }
+
+.attach-form { display: flex; flex-direction: column; gap: 6px; }
+
+.attach-form input {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.attach-form input::placeholder { color: var(--muted); }
+
+.attach-form-actions { display: flex; gap: 8px; }
+.attach-error { color: var(--red-on); font-size: 12px; }
+

@@ -1,0 +1,118 @@
+/* ---------- Firebase: недели, объявления, вложения, админка ---------- */
+
+.tab-date {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tab.active .tab-date { color: inherit; opacity: 0.85; }
+
+.day-date { font-weight: 500; opacity: 0.65; }
+
+.override-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn-line);
+  color: var(--warn-on);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-link { color: var(--muted); }
+
+.announcements { margin-top: 4px; }
+
+.announcements-title {
+  margin: 18px 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.announcement {
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.announcement-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.announcement-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+.announcement p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--text); }
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attach-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+}
+
+.attach-item a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.attach-item a:hover { text-decoration: underline; }
+.attach-icon { flex: none; }
+
+/* Ссылки-карточки на странице «Материалы» — крупная тапабельная цель */
+.attach-item.link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.attach-item.link:active { background: var(--accent-soft); }
+.attach-item.link a { flex: 1; gap: 10px; }
+
+.attach-delete {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--red);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 9px;
+}
+
+.attach-delete:hover { background: var(--red-soft); color: var(--red-on); }
+

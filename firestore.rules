@@ -1,0 +1,125 @@
+rules_version = '2';
+
+// Правила Firestore для «Расписание группы 118».
+// Вставить: Firebase Console → Firestore Database → Rules → Publish
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Староста: может удалять конспекты
+    function isLeader() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/leaders/$(request.auth.uid));
+    }
+
+    // Шаблон недели: читают все, пишет только админ
+    match /schedule/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Переопределения конкретных дат (документ id = 'YYYY-MM-DD')
+    match /dayOverrides/{date} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Конспекты конкретного урока: читают ВСЕ, добавляют ВСЕ
+    // (файл лежит в Yandex Object Storage), удаляют — админ или староста
+    match /notes/{noteId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['lessonKey', 'date', 'subject', 'title', 'url', 'storagePath', 'createdAt', 'createdBy'])
+        && request.resource.data.lessonKey is string
+        && request.resource.data.lessonKey.size() > 0
+        && request.resource.data.lessonKey.size() < 300
+        && request.resource.data.date is string
+        && request.resource.data.date.size() == 10
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() > 0
+        && request.resource.data.subject.size() < 200
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() < 300
+        && request.resource.data.url is string
+        && request.resource.data.url.size() > 5
+        && request.resource.data.url.size() < 600
+        && (request.resource.data.storagePath is string
+            && request.resource.data.storagePath.size() < 300
+            || request.resource.data.storagePath == null);
+      allow update, delete: if isAdmin() || isLeader();
+    }
+
+    // Ссылки: читают ВСЕ, добавляют ВСЕ, удаляет — только админ.
+    // Ссылки: читают ВСЕ, добавляют ВСЕ, удаляет — только админ.
+    // Ссылка с lessonKey принадлежит уроку НА ДАТУ (поле date),
+    // с subject — предметная, с subject == null — общая («пригодится»)
+    match /lessonLinks/{linkId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['subject', 'url', 'label', 'createdAt', 'lessonKey', 'date'])
+        && request.resource.data.url is string
+        && request.resource.data.url.size() > 5
+        && request.resource.data.url.size() < 500
+        && (request.resource.data.subject == null
+            || (request.resource.data.subject is string
+                && request.resource.data.subject.size() > 0
+                && request.resource.data.subject.size() < 200))
+        && (!('lessonKey' in request.resource.data)
+            || request.resource.data.lessonKey == null
+            || (request.resource.data.lessonKey is string
+                && request.resource.data.lessonKey.size() > 0
+                && request.resource.data.lessonKey.size() < 300))
+        && (request.resource.data.date == null
+            || (request.resource.data.date is string
+                && request.resource.data.date.size() == 10));
+      allow update, delete: if isAdmin();
+    }
+
+    // Домашние задания к конкретному уроку: читают ВСЕ, добавляют ВСЕ,
+    // изменяют/удаляют — админ или староста
+    match /homework/{hwId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['lessonKey', 'date', 'subject', 'text', 'createdAt', 'createdBy'])
+        && request.resource.data.lessonKey is string
+        && request.resource.data.lessonKey.size() > 0
+        && request.resource.data.lessonKey.size() < 300
+        && request.resource.data.date is string
+        && request.resource.data.date.size() == 10
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() > 0
+        && request.resource.data.subject.size() < 200
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() < 1000
+        && (request.resource.data.createdBy is string || request.resource.data.createdBy == null);
+      allow update, delete: if isAdmin() || isLeader();
+    }
+
+    // Объявления: читают все, пишет только админ
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Посещаемость (документ id = 'YYYY-MM-DD'):
+    // читают и пишут только админы — список отсутствующих не для группы
+    match /attendance/{date} {
+      allow read, write: if isAdmin();
+    }
+
+    // Роли: документ читает только сам пользователь (проверка isAdmin/isLeader
+    // на клиенте) и Yandex Cloud Function с токеном пользователя
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // создаются вручную в Firebase Console
+    }
+
+    match /leaders/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // создаются вручную в Firebase Console
+    }
+  }
+}

@@ -1,0 +1,122 @@
+:root {
+  color-scheme: light;
+
+  /* ---------- Базовые цвета ---------- */
+  --bg: #f5f7fb;
+  --surface: rgba(255, 255, 255, 0.86);   /* стеклянные карточки */
+  --surface-strong: #ffffff;              /* непрозрачные блоки, строки */
+  --surface-soft: rgba(255, 255, 255, 0.47); /* приглушённые (окна, unmarked) */
+  --glass: rgba(255, 255, 255, 0.5);      /* фиксированные панели (таб-бар, day-dots) */
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --card-muted: rgba(255, 255, 255, 0.75); /* строки-чипы внутри карточек */
+  --text: #111827;
+  --muted: #6b7280;
+  --note: #7b8391;                        /* заметки на карточках */
+  --line: #e6eaf1;
+
+  /* ---------- Акцент ---------- */
+  --accent: #6d5dfc;
+  --accent-2: #8b7cff;
+  --accent-soft: #eeeaff;
+  --on-accent: #ffffff;                   /* текст/точки на акцентном фоне */
+
+  /* ---------- Семантические пары: цвет / мягкий фон / текст бейджа ---------- */
+  --green: #16a34a;      --green-soft: #eaf8ef;  --green-on: #157347;  --green-line: #cde9d6;
+  --red: #c0392b;        --red-soft: #fdeaea;    --red-on: #c0392b;    --red-line: #f3c4c4;
+  --amber: #f59e0b;      --amber-soft: #fff5e8;  --amber-on: #ad6500;  --amber-line: #f2dfae;
+  --blue: #3b82f6;       --blue-soft: #eef5ff;   --blue-on: #3367bb;   --blue-line: #d7e6ff;
+  --warn-soft: #fff7e0;  --warn-line: #f2dfae;   --warn-on: #92660a;   /* предупреждения */
+
+  /* ---------- Нейтральные бейджи (.type) ---------- */
+  --type-bg: #f0f1f5;
+  --type-on: #636b7a;
+
+  /* ---------- Тени ---------- */
+  --shadow: 0 14px 45px rgba(28, 35, 60, 0.08);
+  --shadow-soft: 0 7px 24px rgba(28, 35, 60, 0.06);
+  --radius: 22px;
+}
+
+/* html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0f1220;
+  --surface: rgba(24, 28, 46, 0.72);
+  --surface-strong: #1a1e30;
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --glass: rgba(20, 23, 38, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --card-muted: rgba(255, 255, 255, 0.05);
+  --text: #e8eaf2;
+  --muted: #8f98ab;
+  --note: #98a0b3;
+  --line: #2b3047;
+
+  --accent: #8b7cff;
+  --accent-2: #a89bff;
+  --accent-soft: rgba(139, 124, 255, 0.17);
+  --on-accent: #ffffff;
+
+  --green: #2fbf5f;      --green-soft: rgba(47, 191, 95, 0.16);  --green-on: #63d986;  --green-line: rgba(47, 191, 95, 0.35);
+  --red: #e25548;        --red-soft: rgba(226, 85, 72, 0.16);    --red-on: #ff8f85;    --red-line: rgba(226, 85, 72, 0.4);
+  --amber: #f5a623;      --amber-soft: rgba(245, 166, 35, 0.15); --amber-on: #ffc35c;  --amber-line: rgba(245, 166, 35, 0.35);
+  --blue: #4f94f8;       --blue-soft: rgba(79, 148, 248, 0.16);  --blue-on: #8ab9ff;   --blue-line: rgba(79, 148, 248, 0.35);
+  --warn-soft: rgba(245, 166, 35, 0.12); --warn-line: rgba(245, 166, 35, 0.3); --warn-on: #f3c05c;
+
+  --type-bg: #262b40;
+  --type-on: #9aa3b8;
+
+  --shadow: 0 14px 45px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 7px 24px rgba(0, 0, 0, 0.32);
+} */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+    Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: radial-gradient(circle at 10% -10%, rgba(109, 93, 252, 0.12), transparent 30%),
+    radial-gradient(circle at 100% 0%, rgba(139, 124, 255, 0.08), transparent 27%),
+    var(--bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* Тёмная тема: тот же glow, но на тёмном фоне он заметнее */
+html[data-theme='dark'] body {
+  background: radial-gradient(circle at 10% -10%, rgba(139, 124, 255, 0.16), transparent 32%),
+    radial-gradient(circle at 100% 0%, rgba(139, 124, 255, 0.1), transparent 28%),
+    var(--bg);
+}
+
+button {
+  font-family: inherit;
+}
+
+.wrap {
+  max-width: 1050px;
+  margin: 0 auto;
+  /* env(safe-area-inset-top): в standalone-режиме (PWA) отодвигает контент
+     из-под Dynamic Island / статус-бара; в обычном браузере равен 0.
+     +26px — дыхание сверху для всех страниц, кроме главной
+     (у неё сверху закреплён .day-dots ~78px, см. .wrap.page-home) */
+  padding: calc(env(safe-area-inset-top) + 26px) 18px
+    calc(70px + env(safe-area-inset-bottom));
+}
+.wrap.page-home {
+  padding: calc(env(safe-area-inset-top) + 92px) 18px
+    calc(70px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Hero-секция удалена ---------- */
+

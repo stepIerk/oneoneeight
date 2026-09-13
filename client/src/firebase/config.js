@@ -1,0 +1,35 @@
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
+
+// ⬇️⬇️⬇️  ВСТАВЬТЕ СЮДА firebaseConfig  ⬇️⬇️⬇️
+// Firebase Console → Project settings (шестерёнка) → General →
+// Your apps → Web app → SDK setup and configuration → Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAWHvrU8QUIgwEfKGH5CkWxIVvmbrfauis",
+  authDomain: "oneoneeight-4c24d.firebaseapp.com",
+  projectId: "oneoneeight-4c24d",
+  storageBucket: "oneoneeight-4c24d.firebasestorage.app",
+  messagingSenderId: "1058095714678",
+  appId: "1:1058095714678:web:0d74472ee7a1615f80ea57"
+};
+// ⬆️⬆️⬆️  конец блока вставки  ⬆️⬆️⬆️
+
+// Пока конфиг не вставлен — приложение работает на локальном schedule.json
+// (fallback-режим), не падая на попытках обратиться к Firebase.
+export const firebaseReady = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId)
+
+let app = null
+let auth = null
+let db = null
+let storage = null
+
+if (firebaseReady) {
+  app = initializeApp(firebaseConfig)
+  auth = getAuth(app)
+  db = getFirestore(app)
+  storage = getStorage(app)
+}
+
+export { app, auth, db, storage }
