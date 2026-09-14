@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+} from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
 // ⬇️⬇️⬇️  ВСТАВЬТЕ СЮДА firebaseConfig  ⬇️⬇️⬇️
@@ -28,7 +30,15 @@ let storage = null
 if (firebaseReady) {
   app = initializeApp(firebaseConfig)
   auth = getAuth(app)
-  db = getFirestore(app)
+  /* Персистентный кэш (IndexedDB) вместо дефолтного in-memory:
+     - без интернета (и после перезагрузки страницы) данные Firestore
+       рендерятся из локального кэша, потом тихо обновляются с сервера;
+     - несколько вкладок разделяют один кэш (persistentMultipleTabManager);
+     - при недоступности IndexedDB (приватный режим, квота) SDK сам
+       откатывается на memory-cache — приложение не падает. */
+  db = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  })
   storage = getStorage(app)
 }
 

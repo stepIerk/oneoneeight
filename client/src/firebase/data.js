@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { doc, onSnapshot, collection, addDoc, deleteDoc, setDoc,
+  getDoc, getDocs,
   serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from './config'
@@ -7,47 +8,137 @@ import { announcementsEnabled } from '../config/features'
 import templateFallback from '../data/schedule.json'
 
 /* ------------------------------------------------------------------ */
-/*  Чтение: шаблон недели + оверрайды дат (подписка в реальном времени) */
+/*  Чтение: шаблон недели + оверрайды дат (кэш-first, экономия чтений)  */
 /* ------------------------------------------------------------------ */
 
+/*
+ * Расписание меняется редко, поэтому постоянные onSnapshot-подписки на
+ * schedule/template и dayOverrides слишком дороги: каждый заход = платное
+ * чтение каждого документа заново. Стратегия cache-first:
+ *   1. Состояние хранится в localStorage — рендер мгновенный, без чтений.
+ *   2. С сервера обновляем только если кэшу больше SCHEDULE_TTL (или его нет).
+ *   3. Записи (админка) обновляют локальный кэш оптимистично и запускают
+ *     фоновое перечитывание — админ сразу видит актуальные данные.
+ * «Живые» данные (ДЗ, конспекты, ссылки, объявления) по-прежнему через
+ * onSnapshot — см. useCollection ниже.
+ */
+
+const SCHEDULE_CACHE_KEY = 'schedule-cache-v1'
+const SCHEDULE_TTL = 15 * 60 * 1000 // 15 минут между серверными перечитываниями
+
+let scheduleState = { template: templateFallback, overrides: {}, isFallback: true }
+let scheduleFetchedAt = 0
+let scheduleFetchInFlight = null
+const scheduleListeners = new Set()
+
+/** Оживляем Firestore Timestamp после JSON-сериализации ({seconds, nanoseconds}) */
+function reviveTimestamps(value) {
+  if (Array.isArray(value)) return value.map(reviveTimestamps)
+  if (value && typeof value === 'object') {
+    if (typeof value.seconds === 'number' && typeof value.nanoseconds === 'number') {
+      return new Timestamp(value.seconds, value.nanoseconds)
+    }
+    const out = {}
+    for (const [key, val] of Object.entries(value)) out[key] = reviveTimestamps(val)
+    return out
+  }
+  return value
+}
+
+function persistScheduleCache() {
+  try {
+    localStorage.setItem(SCHEDULE_CACHE_KEY, JSON.stringify({
+      template: scheduleState.template,
+      overrides: scheduleState.overrides,
+      savedAt: scheduleFetchedAt,
+    }))
+  } catch { /* приватный режим / переполненная квота */ }
+}
+
+function notifySchedule() {
+  for (const listener of scheduleListeners) listener()
+}
+
+/* Инициализация из localStorage — модуль загружается до первого рендера,
+   поэтому первый рендер страницы сразу получает закэшированные данные */
+try {
+  const raw = localStorage.getItem(SCHEDULE_CACHE_KEY)
+  if (raw) {
+    const parsed = JSON.parse(raw)
+    if (parsed?.template) {
+      scheduleState = {
+        template: reviveTimestamps(parsed.template),
+        overrides: reviveTimestamps(parsed.overrides ?? {}),
+        isFallback: false,
+      }
+      scheduleFetchedAt = parsed.savedAt ?? 0
+    }
+  }
+} catch { /* битый JSON или недоступный localStorage — остаёмся на fallback */ }
+
 /**
- * Подписывается на schedule/template и коллекцию dayOverrides.
- * Пока Firebase не настроен (или шаблон ещё не импортирован) —
- * возвращает локальный schedule.json как fallback.
+ * Локальное применение записи (админка) к кэшу и подписчикам,
+ * затем фоновое перечитывание с сервера за авторитетными данными
+ * (серверные Timestamp'ы, возможные последствия merge).
+ */
+function applyScheduleWrite(mutation) {
+  scheduleState = mutation(scheduleState)
+  scheduleFetchedAt = 0
+  persistScheduleCache()
+  notifySchedule()
+  refreshSchedule({ force: true })
+}
+
+/**
+ * Перечитывает шаблон и оверрайды с сервера, если кэш устарел.
+ * Вызывается при монтировании хука; конкурентные вызовы схлопываются.
+ */
+export function refreshSchedule({ force = false } = {}) {
+  if (!db) return
+  if (!force && Date.now() - scheduleFetchedAt < SCHEDULE_TTL) return
+  if (scheduleFetchInFlight) return
+  scheduleFetchInFlight = (async () => {
+    try {
+      const [templateSnap, overridesSnap] = await Promise.all([
+        getDoc(doc(db, 'schedule', 'template')),
+        getDocs(collection(db, 'dayOverrides')),
+      ])
+      const overrides = {}
+      overridesSnap.forEach((d) => { overrides[d.id] = d.data() })
+      if (templateSnap.exists()) {
+        scheduleState = { template: templateSnap.data(), overrides, isFallback: false }
+      } else {
+        /* Шаблон ещё не импортирован — остаёмся на schedule.json,
+           но оверрайды, если есть, показываем */
+        scheduleState = { ...scheduleState, overrides }
+      }
+      scheduleFetchedAt = Date.now()
+      persistScheduleCache()
+      notifySchedule()
+    } catch (err) {
+      /* Офлайн / нет прав — работаем на локальном кэше, как раньше на onSnapshot-ошибке */
+      console.error('schedule refresh:', err)
+    } finally {
+      scheduleFetchInFlight = null
+    }
+  })()
+}
+
+/**
+ * Подписывается на состояние расписания (шаблон недели + оверрайды).
+ * Данные приходят из localStorage-кэша мгновенно; с сервера — только
+ * при устаревании кэша (см. SCHEDULE_TTL). Пока Firebase не настроен
+ * (или шаблон ещё не импортирован) — локальный schedule.json как fallback.
  */
 export function useScheduleData() {
-  const [template, setTemplate] = useState(templateFallback)
-  const [overrides, setOverrides] = useState({})
-  const [isFallback, setIsFallback] = useState(true)
-
+  const [state, setState] = useState(scheduleState)
   useEffect(() => {
-    if (!db) return undefined
-
-    const unsubTemplate = onSnapshot(
-      doc(db, 'schedule', 'template'),
-      (snap) => {
-        if (snap.exists()) {
-          setTemplate(snap.data())
-          setIsFallback(false)
-        }
-      },
-      (err) => console.error('schedule/template:', err),
-    )
-
-    const unsubOverrides = onSnapshot(
-      collection(db, 'dayOverrides'),
-      (snap) => {
-        const map = {}
-        snap.forEach((d) => { map[d.id] = d.data() })
-        setOverrides(map)
-      },
-      (err) => console.error('dayOverrides:', err),
-    )
-
-    return () => { unsubTemplate(); unsubOverrides() }
+    const listener = () => setState(scheduleState)
+    scheduleListeners.add(listener)
+    refreshSchedule()
+    return () => { scheduleListeners.delete(listener) }
   }, [])
-
-  return { template, overrides, isFallback }
+  return state
 }
 
 /* ------------------------------------------------------------------ */
@@ -84,6 +175,7 @@ export const useHomework = () => useCollection('homework')
 
 export async function saveTemplateMeta(template, meta) {
   await setDoc(doc(db, 'schedule', 'template'), { ...template, ...meta }, { merge: true })
+  applyScheduleWrite((s) => ({ ...s, template: { ...s.template, ...template, ...meta } }))
 }
 
 export async function saveTemplateDay(dayKey, day) {
@@ -92,6 +184,13 @@ export async function saveTemplateDay(dayKey, day) {
     { days: { [dayKey]: day } },
     { merge: true },
   )
+  applyScheduleWrite((s) => ({
+    ...s,
+    template: {
+      ...s.template,
+      days: { ...s.template.days, [dayKey]: day },
+    },
+  }))
 }
 
 export async function importTemplateFromJson() {
@@ -99,6 +198,7 @@ export async function importTemplateFromJson() {
     ...templateFallback,
     importedAt: serverTimestamp(),
   })
+  applyScheduleWrite((s) => ({ ...s, template: { ...templateFallback, importedAt: null } }))
 }
 
 /* ------------------------------------------------------------------ */
@@ -112,10 +212,20 @@ export async function saveDayOverride(isoDate, lessons, authorEmail) {
     updatedAt: serverTimestamp(),
     updatedBy: authorEmail ?? null,
   })
+  /* updatedAt серверный — локально ставим null, фоновый refresh подтянет настоящий */
+  applyScheduleWrite((s) => ({
+    ...s,
+    overrides: { ...s.overrides, [isoDate]: { date: isoDate, lessons, updatedAt: null, updatedBy: authorEmail ?? null } },
+  }))
 }
 
 export async function deleteDayOverride(isoDate) {
   await deleteDoc(doc(db, 'dayOverrides', isoDate))
+  applyScheduleWrite((s) => {
+    const overrides = { ...s.overrides }
+    delete overrides[isoDate]
+    return { ...s, overrides }
+  })
 }
 
 /* ------------------------------------------------------------------ */

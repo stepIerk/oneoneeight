@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import HomePage from './pages/HomePage.jsx'
+import HomeworkPage from './pages/HomeworkPage.jsx'
 import MaterialsPage from './pages/MaterialsPage.jsx'
 import ProfilePage from './pages/ProfilePage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
@@ -29,6 +30,7 @@ function Shell() {
         >
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/homework" element={<HomeworkPage />} />
             <Route path="/materials" element={<MaterialsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin" element={<AdminPage />} />

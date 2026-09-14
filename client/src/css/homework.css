@@ -1,0 +1,197 @@
+/* ---------- Страница «Дз» ---------- */
+
+.page-homework {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Карточка дня: стеклянная поверхность, как карточки расписания */
+.hw-day {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Сегодняшний день — с акцентной рамкой */
+.hw-day.today { border-color: rgba(109, 93, 252, 0.35); }
+
+.hw-day-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.hw-day-label {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hw-day.today .hw-day-label { background: var(--accent); color: var(--on-accent); }
+
+.hw-day-title {
+  margin: 0;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hw-day-date {
+  margin: 0;
+  flex: none;
+    font-size: 16px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hw-day-today {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Блок пары: кликабельная шапка-предмет + список заданий */
+.hw-lesson + .hw-lesson {
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.hw-lesson {
+  border-radius: 16px;
+  background: var(--card-muted);
+  border: 1px solid var(--line);
+  padding: 12px;
+}
+
+.hw-lesson-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  font-size: 18px;
+}
+
+.hw-lesson-head:active { background: var(--accent-soft); }
+
+.hw-lesson-time {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.hw-lesson-subject {
+  min-width: 0;
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hw-lesson-arrow { flex: none; color: var(--muted); }
+
+.hw-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Строка задания: вся тапабельная цель, чек слева, текст, бейдж «выполнено» */
+.hw-task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.hw-task:active { background: var(--accent-soft); }
+
+.hw-task-check {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  flex: none;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--surface-strong);
+  color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.hw-task-check svg { width: 12px; height: 12px; }
+
+/* Выполнено: зачёркивание, зелёный чек, приглушённый текст */
+.hw-task.done {
+  background: var(--green-soft);
+  border-color: var(--green-line);
+}
+
+.hw-task.done .task-text {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.hw-task.done .hw-task-check {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.hw-task-badge {
+  flex: none;
+  margin-top: 1px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  border: 1px solid var(--green-line);
+  color: var(--green-on);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.hw-empty {
+  margin: 4px 0;
+  font-size: 13.5px;
+  color: var(--muted);
+  text-align: center;
+}
