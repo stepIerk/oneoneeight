@@ -17,6 +17,10 @@
 /* Активная вкладка: только цвет текста, фон рисует пилюля */
 .tab-item.active { background: transparent; }
 
+/* Таб-бар админки — без motion-пилюли (анимации в админке убраны):
+   активная вкладка подсвечивается фоном напрямую */
+.admin-tab-bar .tab-item.active { background: var(--accent-soft); }
+
 /* Обёртка перехода между страницами (App.jsx) */
 .page-transition { min-height: 40vh; }
 

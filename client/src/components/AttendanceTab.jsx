@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react'
-import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAttendance, useAttendanceHistory, saveAttendance, tsToDate } from '../firebase/data'
-import { itemVariants, listVariants } from '../utils/anim'
 import { useForceRepaint } from '../utils/useForceRepaint'
 import studentsData from '../data/students.json'
 import {
@@ -184,19 +182,15 @@ function AttendanceTab() {
           )}
         </div>
 
-        <motion.ul
+        <ul
           className="attendance-list"
-          variants={listVariants}
-          initial="hidden"
-          animate="show"
           key={date}
         >
           {STUDENTS.map((name) => {
             const st = records[name] ?? null
             return (
-              <motion.li
+              <li
                 className="attendance-item"
-                variants={itemVariants}
                 key={name}
               >
                 <span className="attendance-name">{name}</span>
@@ -215,15 +209,15 @@ function AttendanceTab() {
                     </button>
                   ))}
                 </span>
-              </motion.li>
+              </li>
             )
           })}
           {!STUDENTS.length && (
-            <motion.li className="muted" variants={itemVariants}>
+            <li className="muted">
               Список пуст — добавьте студентов в <code>src/data/students.json</code>
-            </motion.li>
+            </li>
           )}
-        </motion.ul>
+        </ul>
 
         {error && <p className="form-error">{error}</p>}
 

@@ -1,6 +1,4 @@
-import { motion } from 'motion/react'
 import { CalendarRange, ClipboardCheck, Repeat2 } from 'lucide-react'
-import { springSnappy } from '../utils/anim'
 
 const TABS = [
   { id: 'template', label: 'Шаблон', Icon: Repeat2 },
@@ -11,11 +9,15 @@ const TABS = [
 /**
  * Нижний таб-бар админки — тот же стеклянный стиль, что у
  * основного TabBar главной страницы (.tab-bar), но управляется
- * состоянием (кнопки вместо NavLink). Активная вкладка — motion-пилюля.
+ * состоянием (кнопки вместо NavLink).
+ *
+ * БЕЗ motion-пилюли (layoutId): это часть админки, где анимации убраны
+ * полностью (обход бага перерисовки iOS Safari). Активная вкладка
+ * подсвечивается обычным CSS-фоном (.admin-tab-bar в motion.css).
  */
 function AdminTabBar({ tab, onChange }) {
   return (
-    <nav className="tab-bar" aria-label="Разделы админ-панели">
+    <nav className="tab-bar admin-tab-bar" aria-label="Разделы админ-панели">
       {TABS.map(({ id, label, Icon }) => (
         <button
           key={id}
@@ -24,13 +26,6 @@ function AdminTabBar({ tab, onChange }) {
           aria-current={tab === id ? 'page' : undefined}
           onClick={() => onChange(id)}
         >
-          {tab === id && (
-            <motion.span
-              className="tab-pill"
-              layoutId="admin-tab-pill"
-              transition={springSnappy}
-            />
-          )}
           <Icon size={22} aria-hidden="true" />
           <span className="tab-label">{label}</span>
         </button>
