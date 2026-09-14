@@ -14,9 +14,10 @@ import { tsToDate } from '../firebase/data'
 import DayEditor from '../components/DayEditor.jsx'
 import AttendanceTab from '../components/AttendanceTab.jsx'
 import AdminTabBar from '../components/AdminTabBar.jsx'
-import { announcementsEnabled } from '../config/features'
+import { announcementsEnabled, adminAnimationsEnabled } from '../config/features'
 import { dayMeta } from '../utils/scheduleModel'
 import { fadeUp } from '../utils/anim'
+import { useForceRepaint } from '../utils/useForceRepaint'
 import { WEEK_KEYS, DAY_LABELS, WEEKDAY_TITLES, todayISO, formatRuDate, weekdayKeyOf } from '../utils/dates'
 
 /* ------------------------------ Вход ------------------------------ */
@@ -139,6 +140,10 @@ function TemplateTab() {
   const [dayKey, setDayKey] = useState('mon')
   const [saving, setSaving] = useState(false)
 
+  /* Шаблон приходит асинхронно (onSnapshot) уже внутри анимированной
+     вкладки — на iOS без принудительной перерисовки может не закраситься */
+  useForceRepaint(template)
+
   const day = template.days?.[dayKey] ?? {
     label: DAY_LABELS[dayKey],
     title: WEEKDAY_TITLES[dayKey],
@@ -238,6 +243,9 @@ function DateTab() {
   const [date, setDate] = useState(todayISO())
   const [emptyMode, setEmptyMode] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  /* Оверрайды тоже приходят асинхронно (onSnapshot) — см. useForceRepaint */
+  useForceRepaint(overrides)
 
   const override = overrides[date]
   const key = weekdayKeyOf(date)
@@ -400,28 +408,52 @@ function AdminPanel() {
         </div>
       </div>
 
-      <AnimatePresence mode="popLayout" initial={false}>
-        {tab === 'template' && (
-          <motion.div key="tab-template" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
-            <TemplateTab />
-          </motion.div>
-        )}
-        {tab === 'date' && (
-          <motion.div key="tab-date" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
-            <DateTab />
-          </motion.div>
-        )}
-        {tab === 'attendance' && (
-          <motion.div key="tab-attendance" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
-            <AttendanceTab />
-          </motion.div>
-        )}
-        {announcementsEnabled && tab === 'announcements' && (
-          <motion.div key="tab-announcements" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
-            <AnnouncementsTab />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Контент вкладок. Обёртка .admin-composite (см. motion.css) —
+          форсированный composite-слой: обход WebKit-бага, когда контент,
+          отрисованный внутри анимируемого (opacity/transform) контейнера
+          после асинхронного колбэка (Firebase), не перерисовывается на iOS
+          (DOM есть, клики работают, paint — нет).
+          adminAnimationsEnabled=false (VITE_ADMIN_ANIMATIONS) —
+          диагностический режим: та же разметка без motion-анимации. */}
+      {adminAnimationsEnabled ? (
+        <AnimatePresence mode="popLayout" initial={false}>
+          {tab === 'template' && (
+            <motion.div key="tab-template" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+              <div className="admin-composite">
+                <TemplateTab />
+              </div>
+            </motion.div>
+          )}
+          {tab === 'date' && (
+            <motion.div key="tab-date" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+              <div className="admin-composite">
+                <DateTab />
+              </div>
+            </motion.div>
+          )}
+          {tab === 'attendance' && (
+            <motion.div key="tab-attendance" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+              <div className="admin-composite">
+                <AttendanceTab />
+              </div>
+            </motion.div>
+          )}
+          {announcementsEnabled && tab === 'announcements' && (
+            <motion.div key="tab-announcements" variants={fadeUp} initial="hidden" animate="show" exit="exit" className="admin-tab-anim">
+              <div className="admin-composite">
+                <AnnouncementsTab />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : (
+        <>
+          {tab === 'template' && <div className="admin-composite"><TemplateTab /></div>}
+          {tab === 'date' && <div className="admin-composite"><DateTab /></div>}
+          {tab === 'attendance' && <div className="admin-composite"><AttendanceTab /></div>}
+          {announcementsEnabled && tab === 'announcements' && <div className="admin-composite"><AnnouncementsTab /></div>}
+        </>
+      )}
 
       {/* Вкладки разделов — в нижнем таб-баре (стиль основного приложения) */}
       <AdminTabBar tab={tab} onChange={setTab} />
@@ -431,6 +463,13 @@ function AdminPanel() {
 
 export default function AdminPage() {
   const { user, isAdmin, isLeader, loading } = useAuth()
+
+  /* iOS Safari: контент, подменённый асинхронным колбэком auth внутри
+     анимируемого контейнера страницы (.page-transition), может не
+     перерисоваться. После каждого перехода loading→false (и при входе
+     по форме, когда user меняется) форсируем reflow/repaint. */
+  useForceRepaint(loading)
+  useForceRepaint(user)
 
   if (loading) {
     return <div className="wrap"><div className="admin-card muted">Загрузка…</div></div>

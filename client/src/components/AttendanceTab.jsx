@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useAttendance, useAttendanceHistory, saveAttendance, tsToDate } from '../firebase/data'
 import { itemVariants, listVariants } from '../utils/anim'
+import { useForceRepaint } from '../utils/useForceRepaint'
 import studentsData from '../data/students.json'
 import {
   formatRuDate, todayISO, weekdayKeyOf, WEEKDAY_TITLES, DAY_LABELS,
@@ -79,6 +80,10 @@ function AttendanceTab() {
   const [date, setDate] = useState(todayISO())
   const { recordsByName: saved, updatedAt, updatedBy, exists } = useAttendance(date)
   const history = useAttendanceHistory()
+  /* Отметки и история приходят асинхронно (onSnapshot) внутри анимированной
+     вкладки — на iOS форсируем перерисовку после их получения */
+  useForceRepaint(history)
+  useForceRepaint(exists ? saved : null)
   // Локальные правки поверх сохранённого: { имя: статус }
   const [edits, setEdits] = useState({})
   const [saving, setSaving] = useState(false)

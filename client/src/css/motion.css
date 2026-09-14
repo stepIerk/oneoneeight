@@ -20,6 +20,23 @@
 /* Обёртка перехода между страницами (App.jsx) */
 .page-transition { min-height: 40vh; }
 
+/* Форсированный composite-слой для контента вкладок админки
+   (обёртка .admin-composite в AdminPage.jsx).
+   Обход WebKit-бага: элементы, отрисованные внутри анимируемого
+   (opacity/transform) контейнера после асинхронного колбэка, на iOS
+   иногда остаются «непрокрашенными» (DOM есть, клики работают, paint нет).
+   Собственный слой (translateZ(0)) заставляет WebKit рисовать и
+   перерисовывать контент независимо от родительской анимации.
+   ВАЖНО: класс вешается на ВНУТРЕННЮЮ обёртку вкладки, а не на .admin-panel
+   целиком — transform на общем предке сломал бы position: fixed
+   у нижнего таб-бара (.tab-bar) внутри панели. */
+.admin-composite {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 /* Раскрытие секций материалов: высота анимируется, контент обрезан */
 .subject-body-anim { overflow: hidden; }
 
