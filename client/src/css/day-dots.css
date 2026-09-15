@@ -84,6 +84,11 @@
   box-shadow: 0 0 0 2px #fff, 0 8px 20px rgba(22, 163, 74, 0.35);
 }
 
+/* Тёмная тема: кольцо вокруг «сегодня» — цветом фона, а не белым */
+html[data-theme='dark'] .day-dot.active.today .dot-num {
+  box-shadow: 0 0 0 2px var(--bg), 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
 /* Motion-пилюля активной даты: градиент перелетает между датами (layoutId) */
 .dot-pill {
   position: absolute;

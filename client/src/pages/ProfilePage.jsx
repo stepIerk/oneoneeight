@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, CalendarDays, GraduationCap, Hash, LogIn, LogOut,
-  Settings2, ShieldCheck, UserRound, Users,
+  Moon, Settings2, ShieldCheck, Sun, UserRound, Users,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { useScheduleData } from '../firebase/data'
 import { signInAdmin, signOut } from '../firebase/auth'
 import InstallHint from '../components/InstallHint.jsx'
@@ -76,6 +77,7 @@ function LoginForm({ onCollapse }) {
 
 export default function ProfilePage() {
   const { user, isAdmin, isLeader, loading, firebaseReady } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const { template } = useScheduleData()
   // Форма входа скрыта по умолчанию — раскрывается по кнопке «Вход для админа»
   const [loginOpen, setLoginOpen] = useState(false)
@@ -96,7 +98,8 @@ export default function ProfilePage() {
 
       
 
-      {/* <section className="profile-card theme-card">
+      {/* Оформление: переключатель светлой/тёмной темы */}
+      <section className="profile-card theme-card">
         <h2>
           {theme === 'dark' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
           Оформление
@@ -115,7 +118,7 @@ export default function ProfilePage() {
             {theme === 'dark' ? 'Светлая' : 'Тёмная'}
           </button>
         </div>
-      </section> */}
+      </section>
 
       <section className="profile-card">
         <h2>

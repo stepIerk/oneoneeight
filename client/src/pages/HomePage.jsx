@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { animate, motion, useMotionValue } from 'motion/react'
+import { CalendarDays } from 'lucide-react'
 import LessonCard from '../components/LessonCard.jsx'
+import CalendarPopup from '../components/CalendarPopup.jsx'
 import Announcements from '../components/Announcements.jsx'
 import { announcementsEnabled } from '../config/features'
 import { fadeUp, listVariants, springSoft, trackSettle, SWIPE_OFFSET, SWIPE_VELOCITY } from '../utils/anim'
@@ -141,6 +143,8 @@ function HomePage() {
   // (первый mount, прыжок через несколько дней), 'slide' — приехала свайпом
   const [navMode, setNavMode] = useState('cascade')
   const [dragActive, setDragActive] = useState(false)
+  // Открыто ли всплывающее окно-календарь (кнопка в панели дней)
+  const [calendarOpen, setCalendarOpen] = useState(false)
   // Трек сбросим в useLayoutEffect ВМЕСТЕ с монтажом новых панелей:
   // trackX.set(0) синхронно ДО рендера показывал бы старый день на один кадр
   const trackResetRef = useRef(false)
@@ -351,6 +355,18 @@ function HomePage() {
             </button>
           )
         })}
+
+        {/* Выбор дальней даты без листания: открывает стеклянный календарь */}
+        <button
+          type="button"
+          className="day-dots-cal"
+          onClick={() => setCalendarOpen(true)}
+          aria-label="Открыть календарь"
+          aria-haspopup="dialog"
+          aria-expanded={calendarOpen}
+        >
+          <CalendarDays size={17} aria-hidden="true" />
+        </button>
       </nav>
 
       <main>
@@ -425,6 +441,15 @@ function HomePage() {
         <span className="hint-swipe">Свайп листает дни и недели</span>
         <Link className="admin-link" to="/admin">Для админа</Link> */}
       </div>
+
+      {/* Календарь: выбор любой даты. pickDate сам решает —
+          соседний день перелистываем свайпом, дальний прыгаем каскадом */}
+      <CalendarPopup
+        open={calendarOpen}
+        selectedDate={selectedDate}
+        onPick={pickDate}
+        onClose={() => setCalendarOpen(false)}
+      />
     </div>
   )
 }

@@ -27,7 +27,7 @@ export function ThemeProvider({ children }) {
     } catch { /* приватный режим */ }
     /* Цвет статус-бара / рамки браузера в PWA */
     const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0f1220' : '#f5f7fb')
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#121213' : '#f5f7fb')
   }, [theme])
 
   const value = useMemo(

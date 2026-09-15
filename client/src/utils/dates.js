@@ -59,6 +59,10 @@ export const WEEKDAY_TITLES = {
  * '2026-09-08' (любой день недели) -> '8 – 14 сентября'
  * (границы месяца/года учитываются: '29 сентября – 5 октября')
  */
+/**
+ * '2026-09-08' (любой день недели) -> '8 – 14 сентября'
+ * (границы месяца/года учитываются: '29 сентября – 5 октября')
+ */
 export function formatWeekRange(weekStartDate) {
   const end = addDays(weekStartDate, 6)
   const a = weekStartDate
@@ -70,4 +74,14 @@ export function formatWeekRange(weekStartDate) {
     return `${a.getDate()} ${MONTHS_GEN[a.getMonth()]} – ${b.getDate()} ${MONTHS_GEN[b.getMonth()]}`
   }
   return `${a.getDate()} ${MONTHS_GEN[a.getMonth()]} ${a.getFullYear()} – ${b.getDate()} ${MONTHS_GEN[b.getMonth()]} ${b.getFullYear()}`
+}
+
+const MONTHS_NOM = [
+  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+]
+
+/** Date -> 'Сентябрь 2026' (для шапки календаря) */
+export function formatMonthYear(date) {
+  return `${MONTHS_NOM[date.getMonth()]} ${date.getFullYear()}`
 }

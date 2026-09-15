@@ -18,6 +18,12 @@
   box-shadow: 0 12px 40px rgba(35, 29, 103, 0.18);
 }
 
+/* Тёмная тема: тень таб-бара на чёрной основе (фиолетовая на тёмном
+   фоне не видна) */
+html[data-theme='dark'] .tab-bar {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
 .tab-item {
   flex: 1;
   display: flex;

@@ -42,38 +42,49 @@
   --tab-bar-offset: 20px;
 }
 
-/* html[data-theme='dark'] {
+/* ---------- Тёмная тема ----------
+   Фоны и поверхности — строгие нейтральные серые/тёмные оттенки,
+   без фиолетового подтона (в отличие от прежней палитры).
+   Акцент же (--accent и производные) остаётся фиолетовым, как в
+   светлой теме: он отвечает за выделение (лекции, активные элементы),
+   а не за задний фон. */
+html[data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #0f1220;
-  --surface: rgba(24, 28, 46, 0.72);
-  --surface-strong: #1a1e30;
-  --surface-soft: rgba(255, 255, 255, 0.05);
-  --glass: rgba(20, 23, 38, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --card-muted: rgba(255, 255, 255, 0.05);
-  --text: #e8eaf2;
-  --muted: #8f98ab;
-  --note: #98a0b3;
-  --line: #2b3047;
+  /* ---------- Базовые цвета ---------- */
+  --bg: #121213;                              /* холст страницы */
+  --surface: rgba(32, 32, 35, 0.86);          /* стеклянные карточки */
+  --surface-strong: #202023;                  /* непрозрачные блоки, строки */
+  --surface-soft: rgba(255, 255, 255, 0.045); /* приглушённые (окна, unmarked) */
+  --glass: rgba(28, 28, 31, 0.72);            /* фиксированные панели (таб-бар, day-dots) */
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --card-muted: rgba(255, 255, 255, 0.04);    /* строки-чипы внутри карточек */
+  --text: #e8e8ec;
+  --muted: #9b9ba3;
+  --note: #a4a4ad;                            /* заметки на карточках */
+  --line: #313136;
 
+  /* ---------- Акцент: тот же фиолетовый, что и в светлой теме ---------- */
   --accent: #8b7cff;
   --accent-2: #a89bff;
-  --accent-soft: rgba(139, 124, 255, 0.17);
-  --on-accent: #ffffff;
+  --accent-soft: rgba(139, 124, 255, 0.18);
+  --on-accent: #ffffff;                       /* текст/точки на акцентном фоне */
 
-  --green: #2fbf5f;      --green-soft: rgba(47, 191, 95, 0.16);  --green-on: #63d986;  --green-line: rgba(47, 191, 95, 0.35);
-  --red: #e25548;        --red-soft: rgba(226, 85, 72, 0.16);    --red-on: #ff8f85;    --red-line: rgba(226, 85, 72, 0.4);
-  --amber: #f5a623;      --amber-soft: rgba(245, 166, 35, 0.15); --amber-on: #ffc35c;  --amber-line: rgba(245, 166, 35, 0.35);
-  --blue: #4f94f8;       --blue-soft: rgba(79, 148, 248, 0.16);  --blue-on: #8ab9ff;   --blue-line: rgba(79, 148, 248, 0.35);
-  --warn-soft: rgba(245, 166, 35, 0.12); --warn-line: rgba(245, 166, 35, 0.3); --warn-on: #f3c05c;
+  /* ---------- Семантические пары: цвет / мягкий фон / текст бейджа ---------- */
+  --green: #34c463;      --green-soft: rgba(52, 196, 99, 0.15);  --green-on: #6ce08d;  --green-line: rgba(52, 196, 99, 0.34);
+  --red: #e5584b;        --red-soft: rgba(229, 88, 75, 0.15);    --red-on: #ff9086;    --red-line: rgba(229, 88, 75, 0.38);
+  --amber: #f5a623;      --amber-soft: rgba(245, 166, 35, 0.15); --amber-on: #ffc45e;  --amber-line: rgba(245, 166, 35, 0.34);
+  --blue: #4f94f8;       --blue-soft: rgba(79, 148, 248, 0.15);  --blue-on: #8ab9ff;   --blue-line: rgba(79, 148, 248, 0.34);
+  --warn-soft: rgba(245, 166, 35, 0.13); --warn-line: rgba(245, 166, 35, 0.3); --warn-on: #f3c05c;
 
-  --type-bg: #262b40;
-  --type-on: #9aa3b8;
+  /* ---------- Нейтральные бейджи (.type) ---------- */
+  --type-bg: #2a2a2e;
+  --type-on: #a2a6ad;
 
-  --shadow: 0 14px 45px rgba(0, 0, 0, 0.45);
-  --shadow-soft: 0 7px 24px rgba(0, 0, 0, 0.32);
-} */
+  /* ---------- Тени ---------- */
+  --shadow: 0 14px 45px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 7px 24px rgba(0, 0, 0, 0.36);
+}
 
 * {
   box-sizing: border-box;
@@ -101,10 +112,10 @@ body {
   transition: background 0.25s ease, color 0.25s ease;
 }
 
-/* Тёмная тема: тот же glow, но на тёмном фоне он заметнее */
+/* Тёмная тема: подсветка фона строго нейтральная (без фиолетового подтона) */
 html[data-theme='dark'] body {
-  background: radial-gradient(circle at 10% -10%, rgba(139, 124, 255, 0.16), transparent 32%),
-    radial-gradient(circle at 100% 0%, rgba(139, 124, 255, 0.1), transparent 28%),
+  background: radial-gradient(circle at 10% -10%, rgba(255, 255, 255, 0.035), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.02), transparent 30%),
     var(--bg);
 }
 

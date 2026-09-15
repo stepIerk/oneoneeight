@@ -38,20 +38,15 @@
   --time-tint: #fdf3e0;
 }
 
-/* Тёмная тема: те же палитры, но полупрозрачные тинты */
-html[data-theme='dark'] .lesson.lecture {
-  --card-tint: rgba(124, 108, 255, 0.13);
-  --time-tint: rgba(124, 108, 255, 0.17);
-}
-
-html[data-theme='dark'] .lesson.practice {
-  --card-tint: rgba(59, 130, 246, 0.14);
-  --time-tint: rgba(59, 130, 246, 0.18);
-}
-
+/* Тёмная тема: фоны карточек — строгие нейтральные, без цветного
+   подтона. «Выделение» типа занятия остаётся за цветной полосой слева,
+   бейджем и прогрессом (--stripe / --stripe-soft: фиолетовые у лекций,
+   синие у семинаров, янтарные у консультаций) */
+html[data-theme='dark'] .lesson.lecture,
+html[data-theme='dark'] .lesson.practice,
 html[data-theme='dark'] .lesson.consult {
-  --card-tint: rgba(245, 158, 11, 0.13);
-  --time-tint: rgba(245, 158, 11, 0.17);
+  --card-tint: var(--surface);
+  --time-tint: var(--surface-soft);
 }
 
 .time {
@@ -123,6 +118,12 @@ html[data-theme='dark'] .lesson.consult {
 .lesson.active .card {
   border-color: var(--stripe-soft);
   box-shadow: 0 14px 34px rgba(28, 35, 60, 0.12);
+}
+
+/* Тёмная тема: тень активной пары — на чёрной основе, иначе на тёмном
+   фоне светлая тень не читается */
+html[data-theme='dark'] .lesson.active .card {
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
 }
 
 .lesson.active .card::before {

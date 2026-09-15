@@ -15,6 +15,31 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="118" />
+
+    <!-- Тема до первого рендера: сохранённая → системная → светлая.
+         Без этого при системной тёмной теме мелькает светлый фон,
+         пока React ещё не смонтировал ThemeProvider. Логика совпадает
+         с client/src/context/ThemeContext.jsx -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('theme')
+          var theme =
+            saved === 'dark' || saved === 'light'
+              ? saved
+              : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+          document.documentElement.dataset.theme = theme
+          if (theme === 'dark') {
+            var meta = document.querySelector('meta[name="theme-color"]')
+            if (meta) meta.setAttribute('content', '#121213')
+          }
+        } catch (e) {
+          /* localStorage недоступен (приватный режим) — остаётся светлая */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
