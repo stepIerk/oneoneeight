@@ -1,5 +1,5 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import HomePage from './pages/HomePage.jsx'
 import TabBar from './components/TabBar.jsx'
@@ -27,13 +27,28 @@ function Shell() {
      Safari новый слой может закоммититься непрокрашенным (кнопки активны,
      контент не виден). Форсируем перерисовку после каждого перехода. */
   useForceRepaint(pathname)
+  /* Возврат вкладки/PWA из фона: WebKit иногда оставляет слой страницы
+     непрокрашенным (DOM живой, кнопки работают, контент невидим), а spring-
+     анимация, замороженная на фоне (rAF не тикает), может не завершиться.
+     Надёжный фикс — тот же, что и ручной: повторная навигация создаёт новый
+     motion-элемент со свежим слоем. Поэтому при возврате видимости меняем
+     key обёртки → AnimatePresence перемонтирует страницу, и она гарантированно
+     отрисовывается заново (entrance-анимация проигрывается повторно). */
+  const [returnTick, setReturnTick] = useState(0)
+  useEffect(() => {
+    const onVisible = () => {
+      if (!document.hidden) setReturnTick((t) => t + 1)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
   return (
     <>
       {/* Плавный переход между страницами: уходит старая, приходит новая */}
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           className="page-transition"
-          key={pathname}
+          key={`${pathname}:${returnTick}`}
           variants={fadeUp}
           initial="hidden"
           animate="show"
