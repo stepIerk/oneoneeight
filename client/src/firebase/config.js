@@ -3,7 +3,6 @@ import { getAuth } from 'firebase/auth'
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
 } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage'
 
 // ⬇️⬇️⬇️  ВСТАВЬТЕ СЮДА firebaseConfig  ⬇️⬇️⬇️
 // Firebase Console → Project settings (шестерёнка) → General →
@@ -25,7 +24,6 @@ export const firebaseReady = Boolean(firebaseConfig.apiKey && firebaseConfig.pro
 let app = null
 let auth = null
 let db = null
-let storage = null
 
 if (firebaseReady) {
   app = initializeApp(firebaseConfig)
@@ -39,7 +37,12 @@ if (firebaseReady) {
   db = initializeFirestore(app, {
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
   })
-  storage = getStorage(app)
 }
 
-export { app, auth, db, storage }
+/* firebase/storage НЕ подключаем: вложения (конспекты) загружаются напрямую
+   в Yandex Object Storage через pre-signed URL (см. yandexStorage.js),
+   а SDK Storage весит заметно больше 100 КБ и попал бы в стартовый бандл
+   впустую — первый рендер на медленной мобильной сети из-за этого
+   задерживался на долгие секунды. */
+
+export { app, auth, db }

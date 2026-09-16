@@ -1,14 +1,20 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import HomePage from './pages/HomePage.jsx'
-import HomeworkPage from './pages/HomeworkPage.jsx'
-import MaterialsPage from './pages/MaterialsPage.jsx'
-import ProfilePage from './pages/ProfilePage.jsx'
-import AdminPage from './pages/AdminPage.jsx'
-import LessonPage from './pages/LessonPage.jsx'
 import TabBar from './components/TabBar.jsx'
 import { fadeUp } from './utils/anim'
 import { useForceRepaint } from './utils/useForceRepaint'
+
+/* Второстепенные страницы грузим лениво: их JS не входит в стартовый бандл,
+   который блокирует первый рендер главной (на медленной мобильной сети
+   большой монолит = десятки секунд пустого экрана). Пока chunk едет,
+   Suspense рисует пустоту внутри уже анимируемой обёртки. */
+const HomeworkPage = lazy(() => import('./pages/HomeworkPage.jsx'))
+const MaterialsPage = lazy(() => import('./pages/MaterialsPage.jsx'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage.jsx'))
+const AdminPage = lazy(() => import('./pages/AdminPage.jsx'))
+const LessonPage = lazy(() => import('./pages/LessonPage.jsx'))
 
 /* На вложенных/flow-страницах (урок, админка) таб-бар прячем,
  * чтобы не мешал формам и навигации назад */
@@ -35,11 +41,11 @@ function Shell() {
         >
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/homework" element={<HomeworkPage />} />
-            <Route path="/materials" element={<MaterialsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/lesson/:date/:lessonKey" element={<LessonPage />} />
+            <Route path="/homework" element={<Suspense fallback={null}><HomeworkPage /></Suspense>} />
+            <Route path="/materials" element={<Suspense fallback={null}><MaterialsPage /></Suspense>} />
+            <Route path="/profile" element={<Suspense fallback={null}><ProfilePage /></Suspense>} />
+            <Route path="/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
+            <Route path="/lesson/:date/:lessonKey" element={<Suspense fallback={null}><LessonPage /></Suspense>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </motion.div>
