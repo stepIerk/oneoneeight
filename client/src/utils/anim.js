@@ -5,6 +5,20 @@
 export const springSoft = { type: 'spring', stiffness: 380, damping: 34 }
 export const springSnappy = { type: 'spring', stiffness: 500, damping: 40 }
 
+/* ── Пилюля активной вкладки таб-бара: «переезд» между вкладками ──
+   РЕГУЛИРОВКА ДЛИТЕЛЬНОСТИ ПЕРЕМЕЩЕНИЯ — ЗДЕСЬ:
+
+   • Spring-вариант (текущий): ощущение живого «доехал и немного пружинит».
+       stiffness  — жёсткость пружины: БОЛЬШЕ = быстрее переезд.
+                    250 — ленивый (~0.8 c), 350 — мягкий (~0.5 c),
+                    600 — резкий (~0.25 c).
+       damping    — гашение колебаний: МЕНЬШЕ = заметнее пружинит в конце,
+                    БОЛЬШЕ (≥ 40) = доезжает без покачивания.
+   • Если нужен точный тайминг в секундах, замените на tween:
+       export const tabPillMove = { type: 'tween', duration: 0.45, ease: [0.32, 0.72, 0, 1] }
+     duration — ровное время перелёта (в секундах), без пружинения. */
+export const tabPillMove = { type: 'spring', stiffness: 350, damping: 32 }
+
 /* Контейнер расписания дня: stagger-дети появляются каскадом */
 export const listVariants = {
   hidden: {},

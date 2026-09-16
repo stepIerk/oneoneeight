@@ -78,7 +78,7 @@ function SubjectSection({ subject, links, open, onToggle, formOpen, onFormOpen, 
   const countWord = links.length === 1 ? 'ссылка' : links.length < 5 ? 'ссылки' : 'ссылок'
 
   return (
-    <section className="subject-card">
+    <motion.section className="subject-card" variants={itemVariants}>
       <button
         type="button"
         className="subject-head"
@@ -155,7 +155,7 @@ function SubjectSection({ subject, links, open, onToggle, formOpen, onFormOpen, 
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
+    </motion.section>
   )
 }
 

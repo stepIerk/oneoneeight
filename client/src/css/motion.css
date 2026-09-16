@@ -1,7 +1,10 @@
 /* Плавные анимации (motion): пилюля активной вкладки, переход страниц,
    раскрытие секций материалов, курсор свайпа, reduced-motion. */
 
-.tab-item { position: relative; overflow: hidden; }
+/* ВАЖНО: без overflow:hidden — пилюля активной вкладки (layoutId="tab-pill")
+   во время перелёта между вкладками выступает за границы tab-item.
+   Обрезка превратила бы плавный «переезд» по таб-бару в мгновенный прыжок. */
+.tab-item { position: relative; }
 
 .tab-item > svg,
 .tab-item > .tab-label { position: relative; z-index: 1; }

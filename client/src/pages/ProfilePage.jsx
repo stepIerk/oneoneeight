@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { motion } from 'motion/react'
+import { listVariants, itemVariants } from '../utils/anim'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, CalendarDays, GraduationCap, Hash, LogIn, LogOut,
@@ -33,7 +35,7 @@ function LoginForm({ onCollapse }) {
   }
 
   return (
-    <section className="profile-card">
+    <motion.section className="profile-card" variants={itemVariants}>
       <h2>
         <LogIn size={18} aria-hidden="true" />
         Вход
@@ -71,7 +73,7 @@ function LoginForm({ onCollapse }) {
           )}
         </div>
       </form>
-    </section>
+    </motion.section>
   )
 }
 
@@ -85,7 +87,7 @@ export default function ProfilePage() {
   const role = isAdmin ? 'Администратор' : isLeader ? 'Староста' : 'Студент'
 
   return (
-    <div className="wrap page-profile">
+    <motion.div className="wrap page-profile" variants={listVariants} initial="hidden" animate="show">
       <header className="page-head">
         <span className="page-head-icon" aria-hidden="true">
           <UserRound />
@@ -99,7 +101,7 @@ export default function ProfilePage() {
       
 
       {/* Оформление: переключатель светлой/тёмной темы */}
-      <section className="profile-card theme-card">
+      <motion.section className="profile-card theme-card" variants={itemVariants}>
         <h2>
           {theme === 'dark' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
           Оформление
@@ -118,9 +120,9 @@ export default function ProfilePage() {
             {theme === 'dark' ? 'Светлая' : 'Тёмная'}
           </button>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="profile-card">
+      <motion.section className="profile-card" variants={itemVariants}>
         <h2>
           <Users size={18} aria-hidden="true" />
           Моя группа
@@ -155,13 +157,13 @@ export default function ProfilePage() {
             <dd>Недельное расписание</dd>
           </div>
         </dl>
-      </section>
+      </motion.section>
 
       {loading ? (
-        <div className="profile-card muted">Загрузка…</div>
+        <motion.div className="profile-card muted" variants={itemVariants}>Загрузка…</motion.div>
       ) : user ? (
         <>
-          <section className="profile-hero">
+          <motion.section className="profile-hero" variants={itemVariants}>
             <span className="profile-avatar-lg" aria-hidden="true">
               <UserRound size={26} />
             </span>
@@ -172,9 +174,9 @@ export default function ProfilePage() {
                 {role}
               </span>
             </div>
-          </section>
+          </motion.section>
 
-          <section className="profile-card">
+          <motion.section className="profile-card" variants={itemVariants}>
             <div className="profile-actions profile-actions-top">
               {(isAdmin || isLeader) && (
                 <Link className="btn btn-primary" to="/admin">
@@ -187,14 +189,14 @@ export default function ProfilePage() {
                 Выйти
               </button>
             </div>
-          </section>
+          </motion.section>
         </>
       ) : (
         firebaseReady
           ? (loginOpen
               ? <LoginForm onCollapse={() => setLoginOpen(false)} />
               : (
-                <section className="profile-card">
+                <motion.section className="profile-card" variants={itemVariants}>
                   <div className="login-collapsed">
                     <button
                       type="button"
@@ -205,19 +207,19 @@ export default function ProfilePage() {
                       Вход для админа
                     </button>
                   </div>
-                </section>
+                </motion.section>
               ))
           : (
-            <section className="profile-card">
+            <motion.section className="profile-card" variants={itemVariants}>
               <h2>
                 <LogIn size={18} aria-hidden="true" />
                 Вход недоступен
               </h2>
-            </section>
+            </motion.section>
           )
       )}
 
       <InstallHint />
-    </div>
+    </motion.div>
   )
 }

@@ -58,7 +58,7 @@ function GeneralSection({ links, open, onToggle }) {
   const countWord = links.length === 1 ? 'ссылка' : links.length < 5 ? 'ссылки' : 'ссылок'
 
   return (
-    <section className="subject-card general">
+    <motion.section className="subject-card general" variants={itemVariants}>
       <button
         type="button"
         className="subject-head"
@@ -156,7 +156,7 @@ function GeneralSection({ links, open, onToggle }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
+    </motion.section>
   )
 }
 
@@ -290,7 +290,7 @@ export default function MaterialsPage() {
           {q ? 'Ничего не найдено — попробуйте другой запрос.' : 'Предметов пока нет.'}
         </p>
       ) : (
-        <div className="subject-list">
+        <motion.div className="subject-list" variants={listVariants} initial="hidden" animate="show">
           {showGeneral && (
             <GeneralSection
               links={visibleGeneral}
@@ -311,7 +311,7 @@ export default function MaterialsPage() {
             />
           ))}
 
-        </div>
+        </motion.div>
       )}
 
     </div>

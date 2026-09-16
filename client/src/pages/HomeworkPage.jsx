@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpenCheck } from 'lucide-react'
+import { motion } from 'motion/react'
+import { listVariants, itemVariants } from '../utils/anim'
 import { useScheduleData, useHomework } from '../firebase/data'
 import { getDaySchedule, lessonKey as makeLessonKey } from '../utils/scheduleModel'
 import {
@@ -49,7 +51,7 @@ function HwTask({ item, done, onToggle }) {
 function HwDay({ iso, lessons, doneMap, onToggle }) {
   const dayKey = weekdayKeyOf(iso)
   return (
-    <section className={`hw-day${iso === todayISO() ? ' today' : ''}`}>
+    <motion.section className={`hw-day${iso === todayISO() ? ' today' : ''}`} variants={itemVariants}>
       <header className="hw-day-head">
         <span className="hw-day-label" aria-hidden="true">{DAY_LABELS[dayKey]}</span>
         <h2 className="hw-day-title">
@@ -77,7 +79,7 @@ function HwDay({ iso, lessons, doneMap, onToggle }) {
           </div>
         </div>
       ))}
-    </section>
+    </motion.section>
   )
 }
 
@@ -147,7 +149,7 @@ function HomeworkPage() {
   }
 
   return (
-    <div className="wrap page-homework">
+    <motion.div className="wrap page-homework" variants={listVariants} initial="hidden" animate="show">
       <header className="page-head">
         <span className="page-head-icon" aria-hidden="true">
           <BookOpenCheck />
@@ -163,9 +165,9 @@ function HomeworkPage() {
       </header>
 
       {withHw.length === 0 ? (
-        <section className="hw-day">
+        <motion.section className="hw-day" variants={itemVariants}>
           <p className="hw-empty">Домашних заданий на ближайшую неделю нет — можно выдохнуть.</p>
-        </section>
+        </motion.section>
       ) : (
         withHw.map((day) => (
           <HwDay
@@ -177,7 +179,7 @@ function HomeworkPage() {
           />
         ))
       )}
-    </div>
+    </motion.div>
   )
 }
 

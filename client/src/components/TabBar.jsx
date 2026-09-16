@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { CalendarDays, BookOpenText, NotebookPen, UserRound } from 'lucide-react'
-import { springSnappy } from '../utils/anim'
+import { tabPillMove } from '../utils/anim'
 
 const TABS = [
   { to: '/', label: 'Расписание', Icon: CalendarDays, end: true },
@@ -40,7 +40,7 @@ function TabBar() {
               <motion.span
                 className="tab-pill"
                 layoutId="tab-pill"
-                transition={springSnappy}
+                transition={tabPillMove}
               />
             )}
             <Icon size={22} aria-hidden="true" />
