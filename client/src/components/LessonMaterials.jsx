@@ -159,12 +159,15 @@ function LinkForm({ subject, lessonKey, date, onDone, onCancel }) {
  *  - к этому уроку на ЭТУ дату (lessonKey + date совпадают);
  *  - к предмету (общие для всех занятий этого предмета).
  */
-export function LessonLinks({ subject, lessonKey, date, links = [] }) {
+export function LessonLinks({ subject, lessonKey, date, lessonLinks = [], subjectLinks = [] }) {
   const { isAdmin } = useAuth()
   const [form, setForm] = useState(null) // null | 'lesson' | 'subject'
 
-  const lessonLinks = links.filter((l) => l.lessonKey === lessonKey && l.date === date)
-  const subjectLinks = links.filter((l) => !l.lessonKey && l.subject === subject)
+  /* Ссылки приходят из двух разных сторов: «к уроку» — уже отобранные по
+     lessonKey + date (общий «горячий» стор или точечный запрос для старой
+     даты), «к предмету» и общие — один компактный общий стор; здесь
+     оставляем только ссылки этого предмета */
+  subjectLinks = subjectLinks.filter((l) => !l.lessonKey && l.subject === subject)
 
   const renderLink = (l) => (
     <span key={l.id} className="file-row">

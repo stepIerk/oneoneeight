@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpenCheck, ChevronRight } from 'lucide-react'
+import { BookOpenCheck } from 'lucide-react'
 import { useScheduleData, useHomework } from '../firebase/data'
 import { getDaySchedule, lessonKey as makeLessonKey } from '../utils/scheduleModel'
 import {

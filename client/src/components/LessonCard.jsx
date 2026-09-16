@@ -2,23 +2,30 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { ClipboardList, DoorOpen, FileText, Link2, User } from 'lucide-react'
 import { lessonKey } from '../utils/scheduleModel'
+import { EMPTY_MATERIALS, dayMaterialsFor } from '../utils/materials'
 import { itemVariants } from '../utils/anim'
+
+const EMPTY_INDEX = new Map()
 
 function formatTimeRange(start, end) {
   return `${start}–${end}`
 }
 
-function LessonCard({ lesson, date, status, progress, notes = [], links = [], homework = [], animated = false }) {
+/**
+ * Карточка пары. `materials` — индекс материалов дня (indexDayMaterials):
+ * внутри лежат уже отобранные по дню конспекты, ссылки и ДЗ этого урока.
+ */
+function LessonCard({ lesson, date, status, progress, materials = EMPTY_INDEX, animated = false }) {
   const navigate = useNavigate()
   const isEmpty = Boolean(lesson.empty)
   const kind = lesson.kind ?? 'other'
 
-  // На карточке — только материалы ЭТОГО урока В ЭТОТ день
-  // (lessonKey не содержит дату, поэтому фильтруем ещё и по ней)
   const key = lessonKey(lesson)
-  const lessonNotes = isEmpty ? [] : notes.filter((n) => n.lessonKey === key && n.date === date)
-  const lessonLinks = isEmpty ? [] : links.filter((l) => l.lessonKey === key && l.date === date)
-  const lessonHw = isEmpty ? [] : homework.filter((h) => h.lessonKey === key && h.date === date)
+  const {
+    notes: lessonNotes,
+    links: lessonLinks,
+    homework: lessonHw,
+  } = isEmpty ? EMPTY_MATERIALS : dayMaterialsFor(materials, key)
 
   const articleProps = animated ? { variants: itemVariants } : {}
   const Article = animated ? motion.article : 'article'

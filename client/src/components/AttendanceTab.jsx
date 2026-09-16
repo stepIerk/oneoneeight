@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useAttendance, useAttendanceHistory, saveAttendance, tsToDate } from '../firebase/data'
+import {
+  ATTENDANCE_HISTORY_PAGE, EMPTY_ATTENDANCE_DAY,
+  useAttendanceWeek, useAttendanceHistory, saveAttendance, tsToDate,
+} from '../firebase/data'
 import { useForceRepaint } from '../utils/useForceRepaint'
 import studentsData from '../data/students.json'
 import {
@@ -76,12 +79,19 @@ function WeekChips({ weekStart, selectedDate, markedDates, onPick }) {
 function AttendanceTab() {
   const { user } = useAuth()
   const [date, setDate] = useState(todayISO())
-  const { recordsByName: saved, updatedAt, updatedBy, exists } = useAttendance(date)
-  const history = useAttendanceHistory()
-  /* Отметки и история приходят асинхронно (onSnapshot) внутри анимированной
+  /* Отметки читаются целой неделей (≤7 док. за запрос): переключение дня
+     внутри недели не создаёт новых чтений, а точки «отмечено» на чипах
+     берутся из тех же данных */
+  const week = useAttendanceWeek(date)
+  const { recordsByName: saved, updatedAt, updatedBy, exists } = week[date] ?? EMPTY_ATTENDANCE_DAY
+  /* История — «страница» последних отмеченных дат; более ранние
+     подгружаются по кнопке (каждая страница = один запрос на 20 док.) */
+  const [historyLimit, setHistoryLimit] = useState(ATTENDANCE_HISTORY_PAGE)
+  const history = useAttendanceHistory(historyLimit)
+  /* Отметки и история приходят асинхронно (Firestore) внутри анимированной
      вкладки — на iOS форсируем перерисовку после их получения */
   useForceRepaint(history)
-  useForceRepaint(exists ? saved : null)
+  useForceRepaint(week)
   // Локальные правки поверх сохранённого: { имя: статус }
   const [edits, setEdits] = useState({})
   const [saving, setSaving] = useState(false)
@@ -92,7 +102,7 @@ function AttendanceTab() {
   const records = useMemo(() => ({ ...saved, ...edits }), [saved, edits])
   const dirty = Object.keys(edits).length > 0
 
-  const markedDates = useMemo(() => new Set(history.map((h) => h.date)), [history])
+  const markedDates = useMemo(() => new Set(Object.keys(week)), [week])
   const weekStart = useMemo(() => startOfWeek(fromISODate(date)), [date])
 
   const counts = useMemo(() => {
@@ -262,6 +272,17 @@ function AttendanceTab() {
           })}
           {!history.length && <li className="muted">Отмеченных дат пока нет</li>}
         </ul>
+        {history.length >= historyLimit && (
+          <div className="day-editor-actions">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setHistoryLimit((limit) => limit + ATTENDANCE_HISTORY_PAGE)}
+            >
+              Показать более ранние
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

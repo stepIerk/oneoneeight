@@ -4,16 +4,13 @@ import { ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { signInAdmin, signOut } from '../firebase/auth'
 import {
-  useScheduleData, useAnnouncements,
+  useScheduleData,
   saveTemplateMeta, saveTemplateDay, importTemplateFromJson,
   saveDayOverride, deleteDayOverride,
-  addAnnouncement, deleteAnnouncement,
 } from '../firebase/data'
-import { tsToDate } from '../firebase/data'
 import DayEditor from '../components/DayEditor.jsx'
 import AttendanceTab from '../components/AttendanceTab.jsx'
 import AdminTabBar from '../components/AdminTabBar.jsx'
-import { announcementsEnabled } from '../config/features'
 import { dayMeta } from '../utils/scheduleModel'
 import { useForceRepaint } from '../utils/useForceRepaint'
 import { WEEK_KEYS, DAY_LABELS, WEEKDAY_TITLES, todayISO, formatRuDate, weekdayKeyOf } from '../utils/dates'
@@ -138,7 +135,7 @@ function TemplateTab() {
   const [dayKey, setDayKey] = useState('mon')
   const [saving, setSaving] = useState(false)
 
-  /* Шаблон приходит асинхронно (onSnapshot) уже внутри анимированной
+  /* Шаблон приходит асинхронно (Firestore) уже внутри анимированной
      вкладки — на iOS без принудительной перерисовки может не закраситься */
   useForceRepaint(template)
 
@@ -242,7 +239,7 @@ function DateTab() {
   const [emptyMode, setEmptyMode] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  /* Оверрайды тоже приходят асинхронно (onSnapshot) — см. useForceRepaint */
+  /* Оверрайды тоже приходят асинхронно (Firestore) — см. useForceRepaint */
   useForceRepaint(overrides)
 
   const override = overrides[date]
@@ -325,66 +322,6 @@ function DateTab() {
   )
 }
 
-/* -------------------- Вкладка: объявления -------------------------- */
-
-function AnnouncementsTab() {
-  const { user } = useAuth()
-  const announcements = useAnnouncements()
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
-  const [busy, setBusy] = useState(false)
-
-  const submit = async (e) => {
-    e.preventDefault()
-    if (!title.trim()) return
-    setBusy(true)
-    try {
-      await addAnnouncement({ title: title.trim(), body: body.trim(), authorEmail: user?.email })
-      setTitle(''); setBody('')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className="admin-card">
-      <h2>Объявления</h2>
-      <form className="admin-form" onSubmit={submit}>
-        <label className="field field-wide">
-          <span>Заголовок</span>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </label>
-        <label className="field field-wide">
-          <span>Текст</span>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} />
-        </label>
-        <button type="submit" className="btn btn-primary" disabled={busy}>
-          {busy ? 'Публикую…' : 'Опубликовать'}
-        </button>
-      </form>
-
-      <h3>Опубликованные ({announcements.length})</h3>
-      <ul className="admin-list">
-        {announcements.map((a) => {
-          const d = tsToDate(a.createdAt)
-          return (
-            <li key={a.id}>
-              <span>
-                <b>{a.title}</b>
-                {d && <span className="muted"> · {d.toLocaleDateString('ru-RU')}</span>}
-              </span>
-              <button type="button" className="btn btn-danger btn-small" onClick={() => deleteAnnouncement(a)}>
-                Удалить
-              </button>
-            </li>
-          )
-        })}
-        {!announcements.length && <li className="muted">Пока ничего нет</li>}
-      </ul>
-    </div>
-  )
-}
-
 /* --------------------------- Панель -------------------------------- */
 
 function AdminPanel() {
@@ -410,11 +347,10 @@ function AdminPanel() {
           контент внутри анимируемого opacity/transform-контейнера оставался
           на opacity 0). Переключение вкладок мгновенное, без анимации.
           Обёртка .admin-composite оставлена: форсированный composite-слой
-          для контента, приходящего асинхронно (Firestore onSnapshot). */}
+          для контента, приходящего асинхронно (Firestore). */}
       {tab === 'template' && <div className="admin-composite"><TemplateTab /></div>}
       {tab === 'date' && <div className="admin-composite"><DateTab /></div>}
       {tab === 'attendance' && <div className="admin-composite"><AttendanceTab /></div>}
-      {announcementsEnabled && tab === 'announcements' && <div className="admin-composite"><AnnouncementsTab /></div>}
 
       {/* Вкладки разделов — в нижнем таб-баре (стиль основного приложения) */}
       <AdminTabBar tab={tab} onChange={setTab} />
@@ -439,7 +375,7 @@ export default function AdminPage() {
     return () => clearTimeout(t)
   }, [])
 
-  /* Данные вкладок приходят асинхронно (Firestore onSnapshot) —
+  /* Данные вкладок приходят асинхронно (Firestore) —
      подстраховка: форсируем reflow/repaint после их получения */
   useForceRepaint(loading)
   useForceRepaint(user)

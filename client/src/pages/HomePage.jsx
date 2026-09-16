@@ -3,12 +3,9 @@ import { animate, motion, useMotionValue } from 'motion/react'
 import { CalendarDays } from 'lucide-react'
 import LessonCard from '../components/LessonCard.jsx'
 import CalendarPopup from '../components/CalendarPopup.jsx'
-import Announcements from '../components/Announcements.jsx'
-import { announcementsEnabled } from '../config/features'
 import { fadeUp, listVariants, springSoft, trackSettle, SWIPE_OFFSET, SWIPE_VELOCITY } from '../utils/anim'
-import {
-  useScheduleData, useNotes, useLessonLinks, useAnnouncements, useHomework,
-} from '../firebase/data'
+import { useDayMaterials, useScheduleData } from '../firebase/data'
+import { indexDayMaterials } from '../utils/materials'
 import {
   getDaySchedule, lessonKey, computeStatuses, dayMeta, toMinutes,
 } from '../utils/scheduleModel'
@@ -21,7 +18,15 @@ import {
  * Контент одного дня. Анимируется через родителя (варианты fadeUp/listVariants):
  * заголовок и карточки появляются каскадом. Side-панели (вчера/завтра) статичны.
  */
-function DayPane({ iso, side, intro, template, overrides, notes, links, homework, nowMinutes, today }) {
+function DayPane({ iso, side, intro, template, overrides, nowMinutes, today }) {
+  /* Материалы дня: внутри «горячего окна» — из общего стора (без новых
+     чтений), для дальних дат из календаря — точечный TTL-запрос */
+  const materials = useDayMaterials(iso)
+  const dayMaterials = useMemo(
+    () => indexDayMaterials(materials.notes, materials.links, materials.homework),
+    [materials],
+  )
+
   const day = useMemo(
     () => getDaySchedule(template, overrides, iso),
     [template, overrides, iso],
@@ -89,9 +94,7 @@ function DayPane({ iso, side, intro, template, overrides, notes, links, homework
               date={iso}
               status={status}
               progress={progress}
-              notes={notes}
-              links={links}
-              homework={homework}
+              materials={dayMaterials}
               animated={!side && intro}
             />
           )
@@ -103,10 +106,6 @@ function DayPane({ iso, side, intro, template, overrides, notes, links, homework
 
 function HomePage() {
   const { template, overrides } = useScheduleData()
-  const notes = useNotes()
-  const links = useLessonLinks()
-  const homework = useHomework()
-  const announcements = useAnnouncements()
 
   // Выбранная дата — основа навигации (и по дням, и по неделям)
   const [selectedDate, setSelectedDate] = useState(() => toISODate(new Date()))
@@ -394,9 +393,6 @@ function HomePage() {
               intro={false}
               template={template}
               overrides={overrides}
-              notes={notes}
-              links={links}
-              homework={homework}
               nowMinutes={nowMinutes}
               today={today}
             />
@@ -406,9 +402,6 @@ function HomePage() {
               intro={navMode === 'cascade'}
               template={template}
               overrides={overrides}
-              notes={notes}
-              links={links}
-              homework={homework}
               nowMinutes={nowMinutes}
               today={today}
             />
@@ -419,17 +412,12 @@ function HomePage() {
               intro={false}
               template={template}
               overrides={overrides}
-              notes={notes}
-              links={links}
-              homework={homework}
               nowMinutes={nowMinutes}
               today={today}
             />
           </motion.div>
         </div>
 
-        {/* Объявления выключены флагом VITE_ENABLE_ANNOUNCEMENTS (config/features.js) */}
-        {announcementsEnabled && <Announcements announcements={announcements} />}
       </main>
 
       {/* <InstallHint /> */}

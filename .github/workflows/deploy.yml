@@ -40,9 +40,6 @@ jobs:
         run: npm run build
         env:
           VITE_PRESIGNER_URL: ${{ secrets.VITE_PRESIGNER_URL }}
-          # Объявления сейчас выключены; чтобы включить — поставить true здесь
-          # или завести секрет VITE_ENABLE_ANNOUNCEMENTS со значением true
-          VITE_ENABLE_ANNOUNCEMENTS: false
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

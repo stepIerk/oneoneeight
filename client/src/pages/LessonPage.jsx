@@ -5,7 +5,7 @@ import {
   ArrowLeft, Clock, MapPin, Plus, Trash2, User, X,
 } from 'lucide-react'
 import {
-  useScheduleData, useNotes, useLessonLinks, useHomework,
+  useLessonHomework, useLessonLinksFor, useLessonNotes, useScheduleData, useSubjectLinks,
   addHomework, deleteHomework,
 } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
@@ -29,9 +29,12 @@ function LessonPage() {
   const { date, lessonKey } = useParams()
   const navigate = useNavigate()
   const { template, overrides } = useScheduleData()
-  const notes = useNotes()
-  const links = useLessonLinks()
-  const homework = useHomework()
+  /* Материалы этого урока: внутри «горячего окна» — фильтр общего стора
+     (без дополнительных чтений), для старых дат — точечный TTL-запрос */
+  const notes = useLessonNotes(lessonKey, date)
+  const lessonLinks = useLessonLinksFor(lessonKey, date)
+  const lessonHw = useLessonHomework(lessonKey, date)
+  const subjectLinks = useSubjectLinks()
   const { user, isAdmin, isLeader } = useAuth()
 
   const [hwText, setHwText] = useState('')
@@ -60,7 +63,6 @@ function LessonPage() {
   const note = lesson?.note ?? ''
   const time = lesson ? `${lesson.start}–${lesson.end}` : `${parsed.start}–${parsed.end}`
 
-  const lessonHw = homework.filter((h) => h.lessonKey === lessonKey && h.date === date)
   const canDeleteHw = isAdmin || isLeader
 
   /* Номер пары этого предмета в этот день («вторая пара» и т.п.) */
@@ -295,7 +297,13 @@ function LessonPage() {
             <div className="block-head">
               <h2>Ссылки</h2>
             </div>
-            <LessonLinks subject={subject} lessonKey={lessonKey} date={date} links={links} />
+            <LessonLinks
+              subject={subject}
+              lessonKey={lessonKey}
+              date={date}
+              lessonLinks={lessonLinks}
+              subjectLinks={subjectLinks}
+            />
           </section>
         </motion.div>
       )}

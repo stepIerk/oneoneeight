@@ -97,12 +97,6 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || isLeader();
     }
 
-    // Объявления: читают все, пишет только админ
-    match /announcements/{announcementId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // Посещаемость (документ id = 'YYYY-MM-DD'):
     // читают и пишут только админы — список отсутствующих не для группы
     match /attendance/{date} {

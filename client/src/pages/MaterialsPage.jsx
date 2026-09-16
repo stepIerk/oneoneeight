@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Globe, Library, Link2, Map as MapIcon, Plus, Search, X } from 'lucide-react'
-import { useLessonLinks, useScheduleData, addGeneralLink, deleteLessonLink } from '../firebase/data'
+import { useSubjectLinks, useScheduleData, addGeneralLink, deleteLessonLink } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
 import { collectSubjects } from '../utils/scheduleModel'
 import { listVariants, itemVariants, springSoft } from '../utils/anim'
@@ -160,7 +160,9 @@ function GeneralSection({ links, open, onToggle }) {
 }
 
 export default function MaterialsPage() {
-  const links = useLessonLinks()
+  /* Ссылки «к предмету» и общие (lessonKey == null) — один компактный стор;
+     ссылки «к уроку» здесь не нужны */
+  const links = useSubjectLinks()
   const { template } = useScheduleData()
   const [query, setQuery] = useState('')
   const [openSubjects, setOpenSubjects] = useState(() => new Set())
