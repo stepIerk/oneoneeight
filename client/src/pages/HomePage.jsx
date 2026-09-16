@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { animate, motion, useMotionValue } from 'motion/react'
 import { CalendarDays } from 'lucide-react'
 import LessonCard from '../components/LessonCard.jsx'
@@ -14,6 +15,7 @@ import {
   toISODate, fromISODate, addDays, startOfWeek,
   formatRuDate, isToday, weekdayKeyOf, DAY_LABELS,
 } from '../utils/dates'
+import { readDayParam, withDayParam } from '../utils/dayParam'
 
 /**
  * Контент одного дня. Анимируется через родителя (варианты fadeUp/listVariants):
@@ -106,17 +108,33 @@ function DayPane({ iso, side, intro, template, overrides, materials = EMPTY_MATE
 
 function HomePage() {
   const { template, overrides } = useScheduleData()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  /* День из URL (?d=YYYY-MM-DD) или сегодняшний, если параметра нет.
+     Нужен для возврата «К расписанию» из урока: страница расписания при
+     переходе перемонтируется и своё состояние теряет — день помнит только URL */
+  const initialDay = readDayParam(searchParams) ?? toISODate(new Date())
 
   // Выбранная дата — основа навигации (и по дням, и по неделям)
-  const [selectedDate, setSelectedDate] = useState(() => toISODate(new Date()))
+  const [selectedDate, setSelectedDate] = useState(initialDay)
   // Дата, подсвеченная в точках недели: обновляется СРАЗУ в момент жеста
   // (goPage/pickDate), а не по завершении доводки трека, — фиолетовая пилюля
   // и числа недели реагируют мгновенно, без «опоздания» за анимацией
-  const [dotDate, setDotDate] = useState(() => toISODate(new Date()))
+  const [dotDate, setDotDate] = useState(initialDay)
   const [now, setNow] = useState(() => new Date())
 
   const selectedDateRef = useRef(selectedDate)
   useEffect(() => { selectedDateRef.current = selectedDate }, [selectedDate])
+
+  /* Смена дня — сразу в URL (replace: листание дней не должно засорять
+     историю браузера десятками записей, «назад» из урока обязан вернуть
+     на расписание, а не листать предыдущие дни). Эффект срабатывает уже
+     после доводки трека (selectedDate меняется в finishTransition),
+     поэтому анимации карусели он не задевает. */
+  useEffect(() => {
+    if (readDayParam(searchParams) === selectedDate) return
+    setSearchParams((prev) => withDayParam(prev, selectedDate), { replace: true })
+  }, [selectedDate, searchParams, setSearchParams])
 
   // Трек карусели: motion value (не state!) — палец ведёт панели 1:1 без ре-рендеров.
   // ВАЖНО: drag свободный, без dragConstraints — встроенный возврат motion в 0

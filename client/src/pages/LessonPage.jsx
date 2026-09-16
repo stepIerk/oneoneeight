@@ -13,6 +13,7 @@ import { getDaySchedule, lessonKey as makeLessonKey } from '../utils/scheduleMod
 import { useForceRepaint } from '../utils/useForceRepaint'
 import { fadeUp, itemVariants, listVariants } from '../utils/anim'
 import { fromISODate, formatRuDate, WEEKDAY_TITLES, weekdayKeyOf } from '../utils/dates'
+import { dayLink } from '../utils/dayParam'
 import { LessonNotes, LessonLinks } from '../components/LessonMaterials.jsx'
 import floorPlanPdf from '../assets/Планы этажей.pdf'
 
@@ -138,10 +139,22 @@ function LessonPage() {
   const dateObj = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? fromISODate(date) : null
   const weekdayTitle = dateObj ? WEEKDAY_TITLES[weekdayKeyOf(date)] : ''
 
+  /* Возврат «К расписанию» — на ТОТ день, в котором открыт урок.
+     Если пришли из расписания, navigate(-1) вернёт ровно тот экран: день уже
+     зашит в URL расписания (?d=YYYY-MM-DD, см. utils/dayParam.js) и остаётся
+     в записи истории. Если урок открыт по прямой ссылке (или история пуста,
+     history.state.idx === 0) — уходим на расписание с днём этого урока. */
+  const scheduleHref = dayLink(date)
+  const backToSchedule = () => {
+    const idx = window.history.state?.idx
+    if (typeof idx === 'number' && idx > 0) navigate(-1)
+    else navigate(scheduleHref)
+  }
+
   return (
     <div className="wrap lesson-page">
       <nav className="lesson-top">
-        <button type="button" className="back-btn back-pill" onClick={() => navigate(-1)}>
+        <button type="button" className="back-btn back-pill" onClick={backToSchedule}>
           <ArrowLeft size={16} aria-hidden="true" />
           Расписание
         </button>
@@ -317,7 +330,7 @@ function LessonPage() {
         </motion.div>
       )}
 
-      <Link className="lesson-bottom-link" to="/">К расписанию</Link>
+      <Link className="lesson-bottom-link" to={scheduleHref}>К расписанию</Link>
     </div>
   )
 }

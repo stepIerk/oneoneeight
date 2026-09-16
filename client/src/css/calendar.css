@@ -179,6 +179,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: 0.15s ease;
+  width: 100%;
 }
 
 .calendar-today-btn:hover {
