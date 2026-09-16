@@ -133,6 +133,70 @@
 .subject-body .mat-list { padding-top: 8px; }
 .subject-form { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
 
+/* ---------- Вложения (ссылки/конспекты) ----------
+   Используются в SubjectLinks (страница «Материалы») и MaterialsPage.
+   Раньше жили в announcements.css и попали под удаление фичи —
+   восстановлены как общие стили. */
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attach-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+}
+
+.attach-item a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.attach-item a:hover { text-decoration: underline; }
+.attach-icon { flex: none; }
+
+/* Ссылки-карточки на странице «Материалы» — крупная тапабельная цель */
+.attach-item.link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.attach-item.link:active { background: var(--accent-soft); }
+.attach-item.link a { flex: 1; gap: 10px; }
+
+.attach-delete {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--red);
+  cursor: pointer;
+  padding: 0;
+  border-radius: 9px;
+}
+
+.attach-delete:hover { background: var(--red-soft); color: var(--red-on); }
+
 .mat-empty-page { text-align: center; color: var(--muted); margin: 24px 0; }
 
 .trash-note {

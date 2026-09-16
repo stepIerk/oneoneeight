@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   addDays, fromISODate, startOfWeek, toISODate, todayISO,
@@ -54,9 +54,9 @@ function CalendarWindow({ selectedDate, onPick, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-label="Календарь"
-      initial={{ opacity: 0, y: 14, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 8, scale: 0.97, transition: { duration: 0.14 } }}
+      initial={{ y: 14, scale: 0.96 }}
+      animate={{ y: 0, scale: 1 }}
+      exit={{ y: 8, scale: 0.97, transition: { duration: 0.14 } }}
       transition={springSoft}
       onClick={(e) => e.stopPropagation()}
     >
@@ -135,20 +135,14 @@ function CalendarWindow({ selectedDate, onPick, onClose }) {
  */
 export default function CalendarPopup({ open, selectedDate, onPick, onClose }) {
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="calendar-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
-          onClick={onClose}
-        >
-          <CalendarWindow selectedDate={selectedDate} onPick={onPick} onClose={onClose} />
-        </motion.div>
-      )}
-    </AnimatePresence>,
+    /* Бэкдроп без motion: единственной его анимацией был opacity,
+       который на iOS Safari оставляет непрокрашенный слой. Полупрозрачность
+       даёт статичный rgba-фон из CSS. */
+    open && (
+      <div className="calendar-backdrop" onClick={onClose}>
+        <CalendarWindow selectedDate={selectedDate} onPick={onPick} onClose={onClose} />
+      </div>
+    ),
     document.body,
   )
 }

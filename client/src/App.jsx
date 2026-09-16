@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { motion } from 'motion/react'
 import HomePage from './pages/HomePage.jsx'
 import TabBar from './components/TabBar.jsx'
 import { fadeUp } from './utils/anim'
@@ -23,48 +23,61 @@ const TAB_HIDDEN_PREFIXES = ['/lesson/', '/admin']
 function Shell() {
   const { pathname } = useLocation()
   const showTabs = !TAB_HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))
-  /* Страница появляется внутри motion-обёртки (opacity/transform): на iOS
-     Safari новый слой может закоммититься непрокрашенным (кнопки активны,
-     контент не виден). Форсируем перерисовку после каждого перехода. */
+  /* Страница появляется внутри motion-обёртки (только transform-анимации:
+     анимированный opacity на iOS Safari может закоммититься непрокрашенным
+     слоем — кнопки активны, контент не виден). Форсируем перерисовку после
+     каждого перехода. */
   useForceRepaint(pathname)
-  /* Возврат вкладки/PWA из фона: WebKit иногда оставляет слой страницы
-     непрокрашенным (DOM живой, кнопки работают, контент невидим), а spring-
-     анимация, замороженная на фоне (rAF не тикает), может не завершиться.
-     Надёжный фикс — тот же, что и ручной: повторная навигация создаёт новый
-     motion-элемент со свежим слоем. Поэтому при возврате видимости меняем
-     key обёртки → AnimatePresence перемонтирует страницу, и она гарантированно
-     отрисовывается заново (entrance-анимация проигрывается повторно). */
+  /* Возврат вкладки/PWA из фона после долгого отсутствия: WebKit иногда
+     оставляет слой страницы непрокрашенным (DOM живой, кнопки работают,
+     контент невидим), а spring-анимация, замороженная на фоне (rAF не
+     тикает), может не завершиться. Надёжный фикс — повторная навигация
+     создаёт новый motion-элемент со свежим слоем, поэтому при возврате
+     меняем key обёртки → AnimatePresence перемонтирует страницу.
+     ВАЖНО: реагируем только на реально долгое пребывание в фоне (>= 1 c).
+     Мобильные браузеры шлют спорадические visibilitychange почти сразу
+     после открытия/возврата — перемонтирование по ним обрывает entrance-
+     анимацию на середине и проигрывает её заново («всплывает дважды»). */
   const [returnTick, setReturnTick] = useState(0)
+  const hiddenAtRef = useRef(0)
   useEffect(() => {
-    const onVisible = () => {
-      if (!document.hidden) setReturnTick((t) => t + 1)
+    const onVis = () => {
+      if (document.hidden) {
+        hiddenAtRef.current = Date.now()
+      } else if (hiddenAtRef.current && Date.now() - hiddenAtRef.current >= 1000) {
+        hiddenAtRef.current = 0
+        setReturnTick((t) => t + 1)
+      } else {
+        hiddenAtRef.current = 0
+      }
     }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
   return (
     <>
-      {/* Плавный переход между страницами: уходит старая, приходит новая */}
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          className="page-transition"
-          key={`${pathname}:${returnTick}`}
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-        >
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/homework" element={<Suspense fallback={null}><HomeworkPage /></Suspense>} />
-            <Route path="/materials" element={<Suspense fallback={null}><MaterialsPage /></Suspense>} />
-            <Route path="/profile" element={<Suspense fallback={null}><ProfilePage /></Suspense>} />
-            <Route path="/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
-            <Route path="/lesson/:date/:lessonKey" element={<Suspense fallback={null}><LessonPage /></Suspense>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </motion.div>
-      </AnimatePresence>
+      {/* Появление страницы (только entrance, без exit): AnimatePresence
+          с mode="wait" на iOS Safari становится источником «двойного
+          всплытия» и непрокрашенных слоёв — старая страница уходит с
+          анимацией, пока новая ещё не смонтирована. Простой монтируемый
+          по ключу элемент играет entrance и сразу остаётся в DOM. */}
+      <motion.div
+        className="page-transition"
+        key={`${pathname}:${returnTick}`}
+        variants={fadeUp}
+        initial="hidden"
+        animate="show"
+      >
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/homework" element={<Suspense fallback={null}><HomeworkPage /></Suspense>} />
+          <Route path="/materials" element={<Suspense fallback={null}><MaterialsPage /></Suspense>} />
+          <Route path="/profile" element={<Suspense fallback={null}><ProfilePage /></Suspense>} />
+          <Route path="/admin" element={<Suspense fallback={null}><AdminPage /></Suspense>} />
+          <Route path="/lesson/:date/:lessonKey" element={<Suspense fallback={null}><LessonPage /></Suspense>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </motion.div>
       {showTabs && <TabBar />}
     </>
   )

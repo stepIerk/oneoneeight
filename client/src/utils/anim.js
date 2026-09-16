@@ -11,23 +11,25 @@ export const listVariants = {
   show: { transition: { staggerChildren: 0.055, delayChildren: 0.04 } },
 }
 
-/* Карточка урока: мягкое появление снизу вверх */
+/* Карточка урока: мягкое появление снизу вверх.
+   ВАЖНО: без opacity — анимированный opacity создаёт полупрозрачный
+   композитный слой, который на iOS Safari может закоммититься
+   непрокрашенным (контент не виден, кнопки работают). */
 export const itemVariants = {
-  hidden: { opacity: 0, y: 22, scale: 0.985 },
+  hidden: { y: 22, scale: 0.985 },
   show: {
-    opacity: 1,
     y: 0,
     scale: 1,
     transition: springSoft,
   },
-  exit: { opacity: 0, y: -12, transition: { duration: 0.16 } },
+  exit: { y: -12, transition: { duration: 0.16 } },
 }
 
-/* Секция/страница: короткое появление */
+/* Секция/страница: короткое появление (только transform, см. выше) */
 export const fadeUp = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: springSoft },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+  hidden: { y: 14 },
+  show: { y: 0, transition: springSoft },
+  exit: { y: -8, transition: { duration: 0.15 } },
 }
 
 /* Пружина доводки трека карусели после свайпа */

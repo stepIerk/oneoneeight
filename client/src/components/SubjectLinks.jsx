@@ -95,9 +95,9 @@ function SubjectSection({ subject, links, open, onToggle, formOpen, onFormOpen, 
           <motion.div
             key="subject-body"
             className="subject-body-anim"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 36 }}
           >
             <div className="subject-body">
