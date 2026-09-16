@@ -10,6 +10,7 @@ import {
 } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
 import { getDaySchedule, lessonKey as makeLessonKey } from '../utils/scheduleModel'
+import { useForceRepaint } from '../utils/useForceRepaint'
 import { fadeUp, itemVariants, listVariants } from '../utils/anim'
 import { fromISODate, formatRuDate, WEEKDAY_TITLES, weekdayKeyOf } from '../utils/dates'
 import { LessonNotes, LessonLinks } from '../components/LessonMaterials.jsx'
@@ -35,6 +36,14 @@ function LessonPage() {
   const lessonLinks = useLessonLinksFor(lessonKey, date)
   const lessonHw = useLessonHomework(lessonKey, date)
   const subjectLinks = useSubjectLinks()
+  /* Материалы приходят асинхронно (Firestore) внутри анимируемой страницы:
+     на iOS Safari контент внутри opacity/transform-обёртки может остаться
+     непрокрашенным — форсируем перерисовку после получения данных */
+  const materials = useMemo(
+    () => ({ notes, lessonLinks, lessonHw, subjectLinks }),
+    [notes, lessonLinks, lessonHw, subjectLinks],
+  )
+  useForceRepaint(materials)
   const { user, isAdmin, isLeader } = useAuth()
 
   const [hwText, setHwText] = useState('')

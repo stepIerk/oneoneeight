@@ -4,8 +4,9 @@ import { CalendarDays } from 'lucide-react'
 import LessonCard from '../components/LessonCard.jsx'
 import CalendarPopup from '../components/CalendarPopup.jsx'
 import { fadeUp, listVariants, springSoft, trackSettle, SWIPE_OFFSET, SWIPE_VELOCITY } from '../utils/anim'
-import { useDayMaterials, useScheduleData } from '../firebase/data'
-import { indexDayMaterials } from '../utils/materials'
+import { useDaysMaterials, useScheduleData } from '../firebase/data'
+import { EMPTY_MATERIALS, indexDayMaterials } from '../utils/materials'
+import { useForceRepaint } from '../utils/useForceRepaint'
 import {
   getDaySchedule, lessonKey, computeStatuses, dayMeta, toMinutes,
 } from '../utils/scheduleModel'
@@ -17,11 +18,10 @@ import {
 /**
  * Контент одного дня. Анимируется через родителя (варианты fadeUp/listVariants):
  * заголовок и карточки появляются каскадом. Side-панели (вчера/завтра) статичны.
+ * `materials` — материалы этого дня, которые приходят из `useDaysMaterials`
+ * родительской страницы (см. комментарий там про перерисовку на iOS).
  */
-function DayPane({ iso, side, intro, template, overrides, nowMinutes, today }) {
-  /* Материалы дня: внутри «горячего окна» — из общего стора (без новых
-     чтений), для дальних дат из календаря — точечный TTL-запрос */
-  const materials = useDayMaterials(iso)
+function DayPane({ iso, side, intro, template, overrides, materials = EMPTY_MATERIALS, nowMinutes, today }) {
   const dayMaterials = useMemo(
     () => indexDayMaterials(materials.notes, materials.links, materials.homework),
     [materials],
@@ -249,6 +249,18 @@ function HomePage() {
     [selectedDate],
   )
 
+  /* Материалы видимых дней (вчера / сегодня / завтра) получает сама страница:
+     когда они приходят из Firestore, страница перерисовывается — вместе с ней
+     пересчитывается резерв высоты трека карусели и принудительно
+     перерисовывается контент (иначе на iOS Safari панель может остаться
+     в DOM, но непрокрашенной: кнопки активны, а содержимого не видно) */
+  const visibleDates = useMemo(
+    () => [prevDate, selectedDate, nextDate],
+    [prevDate, selectedDate, nextDate],
+  )
+  const materialsByDate = useDaysMaterials(visibleDates)
+  useForceRepaint(materialsByDate)
+
   const onTrackDragStart = useCallback(() => {
     // Если отпущенная ранее доводка ещё едет к краю — новый жест её
     // перехватывает и продолжает от текущего сдвига (без скачка).
@@ -393,6 +405,7 @@ function HomePage() {
               intro={false}
               template={template}
               overrides={overrides}
+              materials={materialsByDate[prevDate]}
               nowMinutes={nowMinutes}
               today={today}
             />
@@ -402,6 +415,7 @@ function HomePage() {
               intro={navMode === 'cascade'}
               template={template}
               overrides={overrides}
+              materials={materialsByDate[selectedDate]}
               nowMinutes={nowMinutes}
               today={today}
             />
@@ -412,6 +426,7 @@ function HomePage() {
               intro={false}
               template={template}
               overrides={overrides}
+              materials={materialsByDate[nextDate]}
               nowMinutes={nowMinutes}
               today={today}
             />

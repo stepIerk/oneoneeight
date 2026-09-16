@@ -8,6 +8,7 @@ import AdminPage from './pages/AdminPage.jsx'
 import LessonPage from './pages/LessonPage.jsx'
 import TabBar from './components/TabBar.jsx'
 import { fadeUp } from './utils/anim'
+import { useForceRepaint } from './utils/useForceRepaint'
 
 /* На вложенных/flow-страницах (урок, админка) таб-бар прячем,
  * чтобы не мешал формам и навигации назад */
@@ -16,6 +17,10 @@ const TAB_HIDDEN_PREFIXES = ['/lesson/', '/admin']
 function Shell() {
   const { pathname } = useLocation()
   const showTabs = !TAB_HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))
+  /* Страница появляется внутри motion-обёртки (opacity/transform): на iOS
+     Safari новый слой может закоммититься непрокрашенным (кнопки активны,
+     контент не виден). Форсируем перерисовку после каждого перехода. */
+  useForceRepaint(pathname)
   return (
     <>
       {/* Плавный переход между страницами: уходит старая, приходит новая */}

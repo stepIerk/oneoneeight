@@ -5,10 +5,12 @@ import { doc, collection, addDoc, deleteDoc, setDoc,
 } from 'firebase/firestore'
 import { db } from './config'
 import {
-  DEFAULT_KEEP_ALIVE, patchStore, patchStoreIfExists, patchStoresByPrefix,
+  DEFAULT_KEEP_ALIVE, DEFAULT_CACHE_TTL, patchStore, patchStoreIfExists, patchStoresByPrefix,
   useCachedQuery, useLiveQuery,
 } from './liveStore'
 import { addDays, fromISODate, startOfWeek, toISODate } from '../utils/dates'
+import { useForceRepaint } from '../utils/useForceRepaint'
+import { EMPTY_MATERIALS } from '../utils/materials'
 import templateFallback from '../data/schedule.json'
 
 /* ------------------------------------------------------------------ */
@@ -136,6 +138,13 @@ export function refreshSchedule({ force = false } = {}) {
  */
 export function useScheduleData() {
   const [state, setState] = useState(scheduleState)
+  /* Шаблон приезжает с сервера АСИНХРОННО (при устаревшем localStorage-кэше),
+     уже после монтирования страницы внутри motion-обёртки (opacity/transform):
+     на iOS Safari такой контент может остаться «непрокрашенным» — виден фон,
+     кнопки активны, а содержимого нет. Форсируем перерисовку при каждом
+     обновлении данных расписания (см. useForceRepaint). */
+  useForceRepaint(state.template)
+  useForceRepaint(state.overrides)
   useEffect(() => {
     const listener = () => setState(scheduleState)
     scheduleListeners.add(listener)
@@ -186,9 +195,6 @@ const KEY = {
   linksHot: `links:hot:${HOT.from}:${HOT.to}`,
   homeworkHot: `homework:hot:${HOT.from}:${HOT.to}`,
   linksMeta: 'links:meta', // ссылки «к предмету» и общие (date == null)
-  dayNotes: (date) => `notes:day:${date}`,
-  dayLinks: (date) => `links:day:${date}`,
-  dayHomework: (date) => `homework:day:${date}`,
   lessonNotes: (lessonKey, date) => `notes:lesson:${lessonKey}:${date}`,
   lessonLinks: (lessonKey, date) => `links:lesson:${lessonKey}:${date}`,
   lessonHomework: (lessonKey, date) => `homework:lesson:${lessonKey}:${date}`,
@@ -267,51 +273,102 @@ export function useSubjectLinks() {
 /*  TTL-кэш без постоянного подключения                                */
 /* ------------------------------------------------------------------ */
 
-/**
- * Материалы одного дня карусели { notes, links, homework }.
- * Внутри «горячего окна» — из общих сторов (никаких новых чтений),
- * вне окна (календарь на дальнюю дату) — разовый запрос по дате,
- * результат кэшируется на CACHE_TTL.
+/*
+ * Материалы по конкретным датам (дни вне «горячего окна»: прыжок календарём
+ * на дальнюю дату) держим в модульном кэше: точечные запросы без постоянной
+ * подписки, TTL как у остальных холодных чтений, конкурентные вызовы
+ * схлопываются. Патчится оптимистично, как и «живые» сторы.
  */
-export function useDayMaterials(isoDate) {
+const coldDays = new Map() // iso -> { data: { notes, links, homework }, fetchedAt }
+const coldDaysInflight = new Set()
+const coldDaysListeners = new Set()
+
+function notifyColdDays() {
+  for (const listener of coldDaysListeners) listener()
+}
+
+function loadColdDay(iso) {
+  const cached = coldDays.get(iso)
+  if (cached && Date.now() - cached.fetchedAt < DEFAULT_CACHE_TTL) return
+  if (coldDaysInflight.has(iso)) return
+  coldDaysInflight.add(iso)
+  Promise.all([
+    getDocs(query(collection(db, 'notes'), where('date', '==', iso), limit(DAY_LIMIT))),
+    getDocs(query(collection(db, 'lessonLinks'), where('date', '==', iso), limit(DAY_LIMIT))),
+    getDocs(query(collection(db, 'homework'), where('date', '==', iso), limit(DAY_LIMIT))),
+  ])
+    .then(([notesSnap, linksSnap, homeworkSnap]) => {
+      coldDays.set(iso, {
+        data: {
+          notes: listFromSnap(notesSnap),
+          links: listFromSnap(linksSnap),
+          homework: listFromSnap(homeworkSnap),
+        },
+        fetchedAt: Date.now(),
+      })
+      notifyColdDays()
+    })
+    .catch((err) => {
+      /* Офлайн / нет прав — страница продолжает работать без материалов */
+      console.error(`материалы дня ${iso}:`, err)
+    })
+    .finally(() => { coldDaysInflight.delete(iso) })
+}
+
+/** Оптимистично дописать/изменить список материалов загруженного дня */
+function patchColdDayList(iso, field, mutate) {
+  const cached = coldDays.get(iso)
+  if (!cached) return
+  coldDays.set(iso, { ...cached, data: { ...cached.data, [field]: mutate(cached.data[field]) } })
+  notifyColdDays()
+}
+
+/**
+ * Материалы сразу нескольких дней карусели → { [iso]: { notes, links, homework } }.
+ * Внутри «горячего окна» — фильтр общих сторов (никаких новых чтений), вне
+ * окна — точечные запросы по дате с TTL-кэшем.
+ *
+ * ВАЖНО: данные отдаются странице (а не панели дня), чтобы при их приходе
+ * перерисовывалась страница: вместе с ней пересчитывается резерв высоты
+ * трека карусели и принудительно перерисовывается контент (на iOS Safari
+ * обновление внутри анимируемой обёртки может «залипнуть» непрокрашенным).
+ */
+export function useDaysMaterials(dates) {
   const hotNotes = useNotes()
   const hotLinks = useLessonLinks()
   const hotHomework = useHomework()
-  const cold = !inHotWindow(isoDate)
+  const datesKey = dates.join('|')
+  const [coldTick, setColdTick] = useState(0)
 
-  const notesQuery = useMemo(
-    () => (cold && db && isoDate
-      ? query(collection(db, 'notes'), where('date', '==', isoDate), limit(DAY_LIMIT))
-      : null),
-    [cold, isoDate],
-  )
-  const linksQuery = useMemo(
-    () => (cold && db && isoDate
-      ? query(collection(db, 'lessonLinks'), where('date', '==', isoDate), limit(DAY_LIMIT))
-      : null),
-    [cold, isoDate],
-  )
-  const homeworkQuery = useMemo(
-    () => (cold && db && isoDate
-      ? query(collection(db, 'homework'), where('date', '==', isoDate), limit(DAY_LIMIT))
-      : null),
-    [cold, isoDate],
-  )
-
-  const coldNotes = useCachedQuery(KEY.dayNotes(isoDate), notesQuery, listFromSnap)
-  const coldLinks = useCachedQuery(KEY.dayLinks(isoDate), linksQuery, listFromSnap)
-  const coldHomework = useCachedQuery(KEY.dayHomework(isoDate), homeworkQuery, listFromSnap)
+  useEffect(() => {
+    const listener = () => setColdTick((tick) => tick + 1)
+    coldDaysListeners.add(listener)
+    if (!db) return () => { coldDaysListeners.delete(listener) }
+    datesKey.split('|').forEach((iso) => {
+      if (iso && !inHotWindow(iso)) loadColdDay(iso)
+    })
+    return () => { coldDaysListeners.delete(listener) }
+  }, [datesKey])
 
   return useMemo(() => {
-    if (!cold) {
-      return {
-        notes: hotNotes.filter((n) => n.date === isoDate),
-        links: hotLinks.filter((l) => l.date === isoDate),
-        homework: hotHomework.filter((h) => h.date === isoDate),
+    const byDate = {}
+    for (const iso of datesKey.split('|')) {
+      if (!iso) continue
+      if (inHotWindow(iso)) {
+        byDate[iso] = {
+          notes: hotNotes.filter((n) => n.date === iso),
+          links: hotLinks.filter((l) => l.date === iso),
+          homework: hotHomework.filter((h) => h.date === iso),
+        }
+      } else {
+        byDate[iso] = coldDays.get(iso)?.data ?? EMPTY_MATERIALS
       }
     }
-    return { notes: coldNotes, links: coldLinks, homework: coldHomework }
-  }, [cold, isoDate, hotNotes, hotLinks, hotHomework, coldNotes, coldLinks, coldHomework])
+    return byDate
+    /* coldTick не читается внутри, но его изменение должно пересчитать выборку
+       (появился загруженный «холодный» день) */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datesKey, hotNotes, hotLinks, hotHomework, coldTick])
 }
 
 /**
@@ -476,7 +533,7 @@ export async function addNote({ lessonKey, date, subject, title, url, storagePat
     createdBy: authorEmail ?? null,
   }
   if (inHotWindow(date)) patchStore(KEY.notesHot, (list) => [...(list ?? []), note])
-  patchStoreIfExists(KEY.dayNotes(date), (list) => [...(list ?? []), note])
+  else patchColdDayList(date, 'notes', (list) => [...(list ?? []), note])
   patchStoreIfExists(KEY.lessonNotes(lessonKey, date), (list) => [...(list ?? []), note])
 }
 
@@ -484,7 +541,7 @@ export async function deleteNote(note) {
   await deleteDoc(doc(db, 'notes', note.id))
   const withoutNote = (list) => (list ?? []).filter((n) => n.id !== note.id)
   if (inHotWindow(note.date)) patchStore(KEY.notesHot, withoutNote)
-  patchStoreIfExists(KEY.dayNotes(note.date), withoutNote)
+  else patchColdDayList(note.date, 'notes', withoutNote)
   patchStoreIfExists(KEY.lessonNotes(note.lessonKey, note.date), withoutNote)
 }
 
@@ -519,7 +576,7 @@ export async function addLessonLink({ subject, lessonKey, date, url, label }) {
     return
   }
   if (inHotWindow(link.date)) patchStore(KEY.linksHot, (list) => [...(list ?? []), link])
-  patchStoreIfExists(KEY.dayLinks(link.date), (list) => [...(list ?? []), link])
+  else patchColdDayList(link.date, 'links', (list) => [...(list ?? []), link])
   patchStoreIfExists(KEY.lessonLinks(link.lessonKey, link.date), (list) => [...(list ?? []), link])
 }
 
@@ -556,7 +613,7 @@ export async function deleteLessonLink(link) {
     return
   }
   if (inHotWindow(link.date)) patchStore(KEY.linksHot, withoutLink)
-  patchStoreIfExists(KEY.dayLinks(link.date), withoutLink)
+  else patchColdDayList(link.date, 'links', withoutLink)
   patchStoreIfExists(KEY.lessonLinks(link.lessonKey, link.date), withoutLink)
 }
 
@@ -584,7 +641,7 @@ export async function addHomework({ lessonKey, date, subject, text, authorEmail 
     createdBy: authorEmail ?? null,
   }
   if (inHotWindow(date)) patchStore(KEY.homeworkHot, (list) => [...(list ?? []), item])
-  patchStoreIfExists(KEY.dayHomework(date), (list) => [...(list ?? []), item])
+  else patchColdDayList(date, 'homework', (list) => [...(list ?? []), item])
   patchStoreIfExists(KEY.lessonHomework(lessonKey, date), (list) => [...(list ?? []), item])
 }
 
@@ -592,7 +649,7 @@ export async function deleteHomework(item) {
   await deleteDoc(doc(db, 'homework', item.id))
   const withoutItem = (list) => (list ?? []).filter((h) => h.id !== item.id)
   if (inHotWindow(item.date)) patchStore(KEY.homeworkHot, withoutItem)
-  patchStoreIfExists(KEY.dayHomework(item.date), withoutItem)
+  else patchColdDayList(item.date, 'homework', withoutItem)
   patchStoreIfExists(KEY.lessonHomework(item.lessonKey, item.date), withoutItem)
 }
 

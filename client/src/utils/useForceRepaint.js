@@ -16,6 +16,9 @@ import { useEffect } from 'react'
  * синхронный принудительный reflow, после которого WebKit заново
  * растеризует слой.
  *
+ * Дополнительно перерисовка выполняется при возврате вкладки/PWA из фона:
+ * после возобновления WebKit иногда показывает устаревший (пустой) слой.
+ *
  * @param {unknown} [dep] значение, после изменения которого нужна
  *   перерисовка (например, данные, пришедшие из Firestore);
  *   без аргумента — один раз при монтировании компонента
@@ -23,14 +26,21 @@ import { useEffect } from 'react'
 export function useForceRepaint(dep) {
   useEffect(() => {
     let raf2 = 0
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        void document.body.offsetHeight // чтение layout = принудительный reflow
+    let raf1 = 0
+    const repaint = () => {
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          void document.body.offsetHeight // чтение layout = принудительный reflow
+        })
       })
-    })
+    }
+    repaint()
+    /* Перерисовка при возврате из фона (вкладка снова видима) */
+    document.addEventListener('visibilitychange', repaint)
     return () => {
       cancelAnimationFrame(raf1)
       cancelAnimationFrame(raf2)
+      document.removeEventListener('visibilitychange', repaint)
     }
   }, [dep])
 }

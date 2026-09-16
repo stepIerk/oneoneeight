@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Globe, Library, Link2, Map as MapIcon, Plus, Search, X } from 'lucide-react'
 import { useSubjectLinks, useScheduleData, addGeneralLink, deleteLessonLink } from '../firebase/data'
 import { useAuth } from '../context/AuthContext'
+import { useForceRepaint } from '../utils/useForceRepaint'
 import { collectSubjects } from '../utils/scheduleModel'
 import { listVariants, itemVariants, springSoft } from '../utils/anim'
 import SubjectSection from '../components/SubjectLinks.jsx'
@@ -163,6 +164,9 @@ export default function MaterialsPage() {
   /* Ссылки «к предмету» и общие (lessonKey == null) — один компактный стор;
      ссылки «к уроку» здесь не нужны */
   const links = useSubjectLinks()
+  /* Ссылки приходят асинхронно (Firestore) внутри анимируемых секций:
+     на iOS Safari форсируем перерисовку после получения данных */
+  useForceRepaint(links)
   const { template } = useScheduleData()
   const [query, setQuery] = useState('')
   const [openSubjects, setOpenSubjects] = useState(() => new Set())
